@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TradHub — Admin Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07080D;--s1:#0E0F16;--s2:#13141C;--s3:#1A1B25;
+  --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.12);
+  --t1:#F0F0F5;--t2:rgba(240,240,245,.65);--t3:rgba(240,240,245,.35);
+  --amber:#0E7490;--amber2:#0C647E;--teal:#10B981;--blue:#3B82F6;
+  --red:#F43F5E;--purple:#8B5CF6;--green:#10B981;
+  --fd:'Outfit',sans-serif;
+}
+body{background:var(--bg);color:var(--t1);font-family:var(--fd);min-height:100vh;display:flex;flex-direction:column}
+a{color:#0E7490;text-decoration:none}
+
+/* Header */
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:58px;background:var(--s1);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.hdr-logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px}
+.hdr-lmark{width:28px;height:28px;background:linear-gradient(135deg,#0E7490,#F97316);border-radius:7px;display:flex;align-items:center;justify-content:center}
+.hdr-lmark svg{width:16px;height:16px;fill:white}
+.hdr-badge{background:rgba(244,63,94,.15);border:1px solid rgba(244,63,94,.3);color:#F43F5E;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.05em}
+.hdr-right{display:flex;align-items:center;gap:12px}
+.api-status{font-size:12px;color:var(--t3);display:flex;align-items:center;gap:5px}
+.api-dot{width:7px;height:7px;border-radius:50%;background:var(--teal)}
+.api-dot.off{background:var(--red)}
+
+/* Layout */
+.layout{display:flex;flex:1}
+.sidebar{width:220px;background:var(--s1);border-right:1px solid var(--border);padding:20px 0;position:sticky;top:58px;height:calc(100vh - 58px);overflow-y:auto;flex-shrink:0}
+.main{flex:1;padding:28px;overflow-y:auto;min-height:calc(100vh - 58px)}
+
+/* Nav */
+.nav-sec{font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;padding:8px 20px 4px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;font-size:13px;font-weight:500;color:var(--t2);cursor:pointer;transition:all .15s;border-left:2px solid transparent}
+.nav-item:hover{color:var(--t1);background:rgba(255,255,255,.04)}
+.nav-item.active{color:#0E7490;border-left-color:#0E7490;background:rgba(14,116,144,.06)}
+.nav-ico{font-size:15px;width:18px;text-align:center}
+
+/* Cards */
+.card{background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:20px}
+.card-sm{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:16px}
+
+/* Stats grid */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:24px}
+.stat-card{background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:18px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;inset:0;background:var(--glow,transparent);opacity:.07;pointer-events:none}
+.stat-ico{font-size:22px;margin-bottom:10px}
+.stat-val{font-size:26px;font-weight:800;font-family:var(--fd);margin-bottom:2px}
+.stat-lbl{font-size:12px;color:var(--t2);font-weight:500}
+.stat-sub{font-size:11px;color:var(--t3);margin-top:4px}
+
+/* Table */
+.tbl-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:var(--s3);padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.06em;white-space:nowrap}
+tbody tr{border-top:1px solid var(--border)}
+tbody tr:hover{background:rgba(255,255,255,.025);cursor:pointer}
+td{padding:11px 14px;color:var(--t2);vertical-align:middle}
+td.t1{color:var(--t1);font-weight:600}
+
+/* Badge */
+.bdg{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700}
+.bdg-green{background:rgba(16,185,129,.15);color:#34D399;border:1px solid rgba(16,185,129,.25)}
+.bdg-amber{background:rgba(14,116,144,.15);color:#0E7490;border:1px solid rgba(14,116,144,.25)}
+.bdg-blue{background:rgba(59,130,246,.15);color:#60A5FA;border:1px solid rgba(59,130,246,.25)}
+.bdg-red{background:rgba(244,63,94,.15);color:#F87171;border:1px solid rgba(244,63,94,.25)}
+.bdg-grey{background:rgba(255,255,255,.07);color:var(--t2);border:1px solid var(--border)}
+
+/* Misc */
+.pg-title{font-size:22px;font-weight:800;margin-bottom:4px}
+.pg-sub{font-size:13px;color:var(--t2);margin-bottom:24px}
+.row{display:flex;align-items:center;gap:10px}
+.av{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.fjb{display:flex;justify-content:space-between;align-items:center}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.mb16{margin-bottom:16px}
+.mb24{margin-bottom:24px}
+.mt8{margin-top:8px}
+
+/* Activity feed */
+.feed-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.feed-item:last-child{border-bottom:none}
+.feed-ico{width:34px;height:34px;border-radius:9px;background:var(--s3);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.feed-text{font-size:13px;color:var(--t2);flex:1}
+.feed-time{font-size:11px;color:var(--t3);white-space:nowrap}
+
+/* Chat viewer */
+.chat-wrap{display:flex;flex-direction:column;gap:10px;max-height:480px;overflow-y:auto;padding:4px}
+.msg-row{display:flex;flex-direction:column}
+.msg-row.out{align-items:flex-end}
+.msg-row.in{align-items:flex-start}
+.msg-bubble{max-width:75%;padding:9px 13px;border-radius:13px;font-size:13px;line-height:1.5}
+.msg-bubble.out{background:rgba(14,116,144,.18);border:1px solid rgba(14,116,144,.25);color:var(--t1)}
+.msg-bubble.in{background:var(--s3);border:1px solid var(--border);color:var(--t1)}
+.msg-meta{font-size:10px;color:var(--t3);margin-top:3px;padding:0 4px}
+
+/* Search / filter */
+.search-bar{display:flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:8px 14px;margin-bottom:18px}
+.search-bar input{background:none;border:none;outline:none;color:var(--t1);font-family:var(--fd);font-size:13px;flex:1}
+.search-bar input::placeholder{color:var(--t3)}
+
+/* Modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:200;padding:20px}
+.overlay.open{display:flex}
+.modal{background:var(--s2);border:1px solid var(--border2);border-radius:18px;width:100%;max-width:600px;max-height:85vh;overflow-y:auto}
+.modal-hdr{display:flex;justify-content:space-between;align-items:center;padding:18px 20px;border-bottom:1px solid var(--border)}
+.modal-title{font-weight:700;font-size:16px}
+.modal-cls{background:none;border:none;color:var(--t3);font-size:18px;cursor:pointer;padding:4px}
+.modal-body{padding:20px}
+
+/* Refreshing */
+.loading{opacity:.5;pointer-events:none}
+.spin{display:inline-block;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Responsive */
+@media(max-width:900px){
+  .sidebar{display:none}
+  .main{padding:16px}
+  .g3{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-logo">
+    <div class="hdr-lmark" style="display:flex;flex-direction:column;gap:3px;align-items:center;justify-content:center;padding:8px">
+      <div style="width:18px;height:4px;border-radius:2px;background:#ECFEFF"></div>
+      <div style="width:18px;height:4px;border-radius:2px;background:#38BDF8"></div>
+      <div style="width:18px;height:4px;border-radius:2px;background:#0E7490"></div>
+    </div>
+    TradHub
+    <span class="hdr-badge">ADMIN</span>
+  </div>
+  <div class="hdr-right">
+    <div class="api-status">
+      <div class="api-dot" id="api-dot"></div>
+      <span id="api-status-txt">Connecting…</span>
+    </div>
+    <div style="font-size:12px;color:var(--t3)">Last refresh: <span id="last-refresh">—</span></div>
+    <button onclick="refresh()" style="background:rgba(14,116,144,.15);border:1px solid rgba(14,116,144,.3);color:#0E7490;padding:6px 14px;border-radius:8px;cursor:pointer;font-family:var(--fd);font-size:12px;font-weight:600">↻ Refresh</button>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="sidebar">
+    <div class="nav-sec">Overview</div>
+    <div class="nav-item active" data-page="overview" onclick="nav('overview')"><span class="nav-ico">📊</span>Dashboard</div>
+    <div class="nav-item" data-page="activity" onclick="nav('activity')"><span class="nav-ico">⚡</span>Live Activity</div>
+    <div class="nav-sec" style="margin-top:10px">Users</div>
+    <div class="nav-item" data-page="users" onclick="nav('users')"><span class="nav-ico">👥</span>All Users</div>
+    <div class="nav-sec" style="margin-top:10px">Jobs & Bids</div>
+    <div class="nav-item" data-page="jobs" onclick="nav('jobs')"><span class="nav-ico">📋</span>All Jobs</div>
+    <div class="nav-item" data-page="messages" onclick="nav('messages')"><span class="nav-ico">💬</span>Conversations</div>
+    <div class="nav-sec" style="margin-top:10px">Finance</div>
+    <div class="nav-item" data-page="payments" onclick="nav('payments')"><span class="nav-ico">💳</span>Transactions</div>
+  </nav>
+
+  <main class="main" id="main">
+    <div style="text-align:center;padding:60px;color:var(--t3)">
+      <div style="font-size:32px;margin-bottom:12px" class="spin">⚙️</div>
+      <div>Loading dashboard…</div>
+    </div>
+  </main>
+</div>
+
+<!-- Conversation Modal -->
+<div class="overlay" id="chat-overlay" onclick="if(event.target===this)closeChat()">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title" id="chat-title">Conversation</div>
+      <button class="modal-cls" onclick="closeChat()">✕</button>
+    </div>
+    <div class="modal-body" id="chat-body"></div>
+  </div>
+</div>
+
+<script>
+const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API = IS_LOCAL ? 'http://localhost:4000/api' : 'https://api.tradhub.ai/api';
+const ADMIN = 'tradhub-admin-dev'; // Change this to match your server ADMIN_KEY
+
+let D = {}; // all fetched data
+let currentPage = 'overview';
+
+// ── Fetch helpers ─────────────────────────────────────────────────────────────
+async function fetchAdmin(path) {
+  const r = await fetch(API + path, { headers: { 'x-admin-key': ADMIN } });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+async function refresh() {
+  document.getElementById('main').classList.add('loading');
+  try {
+    const [stats, users, jobs, transactions, activity] = await Promise.all([
+      fetchAdmin('/admin/stats'),
+      fetchAdmin('/admin/users'),
+      fetchAdmin('/admin/jobs'),
+      fetchAdmin('/admin/transactions'),
+      fetchAdmin('/admin/activity'),
+    ]);
+    D = { stats, users, jobs, transactions, activity };
+    document.getElementById('api-dot').className = 'api-dot';
+    document.getElementById('api-status-txt').textContent = 'API connected';
+    document.getElementById('last-refresh').textContent = new Date().toLocaleTimeString();
+    render();
+  } catch(err) {
+    document.getElementById('api-dot').className = 'api-dot off';
+    document.getElementById('api-status-txt').textContent = 'API offline';
+    document.getElementById('main').innerHTML = `
+      <div style="text-align:center;padding:60px;color:var(--t3)">
+        <div style="font-size:32px;margin-bottom:12px">⚠️</div>
+        <div style="font-size:16px;font-weight:600;color:var(--t1);margin-bottom:8px">Cannot connect to server</div>
+        <div style="font-size:13px;margin-bottom:20px">Make sure the TradHub server is running on port 4000</div>
+        <code style="background:var(--s2);padding:8px 16px;border-radius:8px;font-size:12px">cd server && npm run dev</code>
+      </div>`;
+  }
+  document.getElementById('main').classList.remove('loading');
+}
+
+function nav(page) {
+  currentPage = page;
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.page === page);
+  });
+  render();
+}
+
+function render() {
+  const pages = { overview, activity, users, jobs, messages, payments };
+  if (pages[currentPage]) {
+    document.getElementById('main').innerHTML = pages[currentPage]();
+  }
+}
+
+// ── Formatters ────────────────────────────────────────────────────────────────
+const fc  = n => '$' + (n||0).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+const fc0 = n => '$' + Math.round(n||0).toLocaleString();
+const ago = ts => {
+  if (!ts) return '—';
+  const d = Date.now() - ts, m = ~~(d/6e4), h = ~~(d/36e5), dy = ~~(d/864e5);
+  return d < 6e4 ? 'just now' : d < 36e5 ? m+'m ago' : d < 864e5 ? h+'h ago' : dy+'d ago';
+};
+const fdate = ts => ts ? new Date(ts).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+const statusBadge = s => {
+  const map = {
+    bidding:    ['bdg-blue','📋 Bidding'],
+    inprogress: ['bdg-amber','⚡ In Progress'],
+    completed:  ['bdg-green','✓ Completed'],
+    cancelled:  ['bdg-grey','✗ Cancelled'],
+    held:       ['bdg-amber','🔒 Held'],
+    captured:   ['bdg-green','💰 Paid'],
+    pending:    ['bdg-grey','⏳ Pending'],
+    refunded:   ['bdg-red','↩ Refunded'],
+    failed:     ['bdg-red','✗ Failed'],
+  };
+  const [cls, label] = map[s] || ['bdg-grey', s];
+  return `<span class="bdg ${cls}">${label}</span>`;
+};
+const tradeBg = {'plumbing':'rgba(59,130,246,.2)','electrical':'rgba(14,116,144,.2)','carpentry':'rgba(16,185,129,.2)','painting':'rgba(139,92,246,.2)','roofing':'rgba(244,63,94,.2)','hvac':'rgba(59,130,246,.15)','landscaping':'rgba(16,185,129,.15)','tiling':'rgba(14,116,144,.15)'};
+const tradeIc = {'plumbing':'🔧','electrical':'⚡','carpentry':'🔨','painting':'🎨','roofing':'🏠','hvac':'❄️','landscaping':'🌿','tiling':'🪟'};
+const ini = name => (name||'?').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+
+// ── Pages ─────────────────────────────────────────────────────────────────────
+
+function overview() {
+  const s = D.stats || {};
+  const u = s.users || {}, j = s.jobs || {}, p = s.payments || {};
+  return `
+    <div class="pg-title">Dashboard</div>
+    <div class="pg-sub">Platform overview at a glance</div>
+
+    <div class="stats-grid">
+      <div class="stat-card" style="--glow:rgba(16,185,129,1)">
+        <div class="stat-ico">💰</div>
+        <div class="stat-val" style="color:#34D399">${fc0(p.gross_volume||0)}</div>
+        <div class="stat-lbl">Gross volume</div>
+        <div class="stat-sub">Platform fees: ${fc0(p.platform_fees||0)}</div>
+      </div>
+      <div class="stat-card" style="--glow:rgba(14,116,144,1)">
+        <div class="stat-ico">⏳</div>
+        <div class="stat-val" style="color:#0E7490">${fc0(p.pending||0)}</div>
+        <div class="stat-lbl">In escrow</div>
+        <div class="stat-sub">Held pending completion</div>
+      </div>
+      <div class="stat-card" style="--glow:rgba(59,130,246,1)">
+        <div class="stat-ico">👥</div>
+        <div class="stat-val" style="color:#60A5FA">${u.total||0}</div>
+        <div class="stat-lbl">Total users</div>
+        <div class="stat-sub">${u.homeowners||0} homeowners · ${u.tradesmen||0} tradesmen</div>
+      </div>
+      <div class="stat-card" style="--glow:rgba(139,92,246,1)">
+        <div class="stat-ico">📋</div>
+        <div class="stat-val" style="color:#A78BFA">${j.total||0}</div>
+        <div class="stat-lbl">Total jobs</div>
+        <div class="stat-sub">${j.bidding||0} open · ${j.inprogress||0} in progress</div>
+      </div>
+      <div class="stat-card" style="--glow:rgba(16,185,129,1)">
+        <div class="stat-ico">✅</div>
+        <div class="stat-val" style="color:#34D399">${j.completed||0}</div>
+        <div class="stat-lbl">Jobs completed</div>
+        <div class="stat-sub">${(p.total_transactions||0)} paid transactions</div>
+      </div>
+      <div class="stat-card" style="--glow:rgba(14,116,144,1)">
+        <div class="stat-ico">📈</div>
+        <div class="stat-val" style="color:#0E7490">${fc0(p.this_month||0)}</div>
+        <div class="stat-lbl">Fees this month</div>
+        <div class="stat-sub">Today: ${fc0(p.today||0)} · Week: ${fc0(p.this_week||0)}</div>
+      </div>
+    </div>
+
+    <div class="g2 mb24">
+      <div class="card">
+        <div style="font-size:13px;font-weight:700;margin-bottom:14px">Recent Jobs</div>
+        ${(D.jobs||[]).slice(0,6).map(j=>`
+          <div class="fjb" style="padding:8px 0;border-bottom:1px solid var(--border)">
+            <div class="row" style="gap:8px">
+              <div style="width:28px;height:28px;border-radius:7px;background:${tradeBg[j.trade]||'rgba(255,255,255,.1)'};display:flex;align-items:center;justify-content:center;font-size:13px">${tradeIc[j.trade]||'🔧'}</div>
+              <div>
+                <div style="font-size:12px;font-weight:600;color:var(--t1)">${j.title}</div>
+                <div style="font-size:11px;color:var(--t3)">${j.owner?.name||'?'} · ${ago(j.created_at)}</div>
+              </div>
+            </div>
+            ${statusBadge(j.status)}
+          </div>`).join('')}
+      </div>
+      <div class="card">
+        <div style="font-size:13px;font-weight:700;margin-bottom:14px">Recent Transactions</div>
+        ${(D.transactions||[]).length === 0
+          ? `<div style="text-align:center;padding:20px;color:var(--t3);font-size:13px">No transactions yet</div>`
+          : (D.transactions||[]).slice(0,6).map(t=>`
+          <div class="fjb" style="padding:8px 0;border-bottom:1px solid var(--border)">
+            <div>
+              <div style="font-size:12px;font-weight:600;color:var(--t1)">${t.job_title||'Job'}</div>
+              <div style="font-size:11px;color:var(--t3)">${t.homeowner_name||'?'} → ${t.tradesman_name||'?'}</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:13px;font-weight:700;color:#34D399">${fc(t.amount)}</div>
+              ${statusBadge(t.status)}
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="fjb mb16">
+        <div style="font-size:13px;font-weight:700">Recent Activity</div>
+        <button onclick="nav('activity')" style="background:none;border:none;color:#0E7490;font-size:12px;cursor:pointer;font-family:var(--fd)">View all →</button>
+      </div>
+      ${(D.activity||[]).slice(0,8).map(e=>`
+        <div class="feed-item">
+          <div class="feed-ico">${e.icon}</div>
+          <div class="feed-text">${e.text}</div>
+          <div class="feed-time">${ago(e.time)}</div>
+        </div>`).join('')}
+    </div>`;
+}
+
+function activity() {
+  return `
+    <div class="pg-title">Live Activity</div>
+    <div class="pg-sub">Every action happening on the platform in real time</div>
+    <div class="card" style="padding:0">
+      ${(D.activity||[]).map(e=>`
+        <div class="feed-item" style="padding:12px 20px">
+          <div class="feed-ico">${e.icon}</div>
+          <div style="flex:1">
+            <div class="feed-text">${e.text}</div>
+          </div>
+          <div class="feed-time">${ago(e.time)}</div>
+        </div>`).join('') || '<div style="padding:40px;text-align:center;color:var(--t3)">No activity yet</div>'}
+    </div>`;
+}
+
+function users() {
+  const all = D.users || [];
+  return `
+    <div class="pg-title">Users</div>
+    <div class="pg-sub">${all.length} registered accounts</div>
+    <div class="search-bar">
+      <span style="color:var(--t3)">🔍</span>
+      <input placeholder="Search by name or email…" id="user-search" oninput="filterUsers(this.value)">
+    </div>
+    <div id="user-table">
+      ${renderUsersTable(all)}
+    </div>`;
+}
+
+function filterUsers(q) {
+  const filtered = (D.users||[]).filter(u =>
+    u.name.toLowerCase().includes(q.toLowerCase()) ||
+    u.email.toLowerCase().includes(q.toLowerCase())
+  );
+  document.getElementById('user-table').innerHTML = renderUsersTable(filtered);
+}
+
+function renderUsersTable(list) {
+  return `<div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th>USER</th><th>ROLE</th><th>LOCATION</th>
+        <th>CREDENTIALS</th><th>JOBS</th><th>JOINED</th>
+      </tr></thead>
+      <tbody>
+        ${list.map(u => `<tr>
+          <td>
+            <div class="row">
+              <div class="av" style="background:rgba(14,116,144,.15);color:#0E7490">${u.ini||ini(u.name)}</div>
+              <div>
+                <div style="font-weight:600;color:var(--t1)">${u.name}</div>
+                <div style="font-size:11px;color:var(--t3)">${u.email}</div>
+              </div>
+            </div>
+          </td>
+          <td><span class="bdg ${u.role==='tradesman'?'bdg-blue':'bdg-amber'}">${u.role==='tradesman'?'🔧 Tradesman':'🏠 Homeowner'}</span></td>
+          <td class="t2">${u.city||'—'}</td>
+          <td>${u.role==='tradesman' ? `
+            <span title="License" style="margin-right:4px">${u.profile?.license?'📋✓':'📋✗'}</span>
+            <span title="Insured"  style="margin-right:4px">${u.profile?.insured?'🛡️✓':'🛡️✗'}</span>
+            <span title="Bonded">${u.profile?.bonded?'🔒✓':'🔒✗'}</span>` : '—'}
+          </td>
+          <td class="t1">${u.job_count}</td>
+          <td class="t2">${ago(u.created_at)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>`;
+}
+
+function jobs() {
+  const all = D.jobs || [];
+  return `
+    <div class="pg-title">All Jobs</div>
+    <div class="pg-sub">${all.length} jobs posted</div>
+    <div class="search-bar">
+      <span style="color:var(--t3)">🔍</span>
+      <input placeholder="Search jobs…" id="job-search" oninput="filterJobs(this.value)">
+    </div>
+    <div id="job-table">${renderJobsTable(all)}</div>`;
+}
+
+function filterJobs(q) {
+  const f = (D.jobs||[]).filter(j =>
+    j.title.toLowerCase().includes(q.toLowerCase()) ||
+    (j.owner?.name||'').toLowerCase().includes(q.toLowerCase())
+  );
+  document.getElementById('job-table').innerHTML = renderJobsTable(f);
+}
+
+function renderJobsTable(list) {
+  return `<div class="tbl-wrap"><table>
+    <thead><tr>
+      <th>JOB</th><th>HOMEOWNER</th><th>BUDGET</th>
+      <th>BIDS</th><th>STATUS</th><th>PAYMENT</th><th>POSTED</th>
+    </tr></thead>
+    <tbody>
+      ${list.map(j => `<tr onclick="viewJobConvos('${j.id}')">
+        <td>
+          <div class="row">
+            <div style="width:30px;height:30px;border-radius:7px;background:${tradeBg[j.trade]||'rgba(255,255,255,.1)'};display:flex;align-items:center;justify-content:center;font-size:14px">${tradeIc[j.trade]||'🔧'}</div>
+            <div>
+              <div style="font-weight:600;color:var(--t1)">${j.title}</div>
+              <div style="font-size:11px;color:var(--t3)">${j.city||j.address||'—'}</div>
+            </div>
+          </div>
+        </td>
+        <td class="t2">${j.owner?.name||'?'}</td>
+        <td class="t1">$${j.budget_min}–${j.budget_max>=9999?'1k+':'$'+j.budget_max}</td>
+        <td class="t1">${j.bid_count}</td>
+        <td>${statusBadge(j.status)}</td>
+        <td>${j.payment_amount ? `<span style="font-size:12px;color:#34D399;font-weight:700">$${j.payment_amount}</span> ${statusBadge(j.payment_status)}` : '<span style="color:var(--t3);font-size:12px">None</span>'}</td>
+        <td class="t2">${ago(j.created_at)}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table></div>`;
+}
+
+function messages() {
+  const allJobs = (D.jobs||[]).filter(j => j.bid_count > 0);
+  return `
+    <div class="pg-title">Conversations</div>
+    <div class="pg-sub">Click any job to view the full conversation between homeowner and tradesman</div>
+    <div class="tbl-wrap"><table>
+      <thead><tr>
+        <th>JOB</th><th>HOMEOWNER</th><th>STATUS</th><th>PAYMENT</th><th>ACTION</th>
+      </tr></thead>
+      <tbody>
+        ${allJobs.map(j => `<tr>
+          <td>
+            <div class="row">
+              <div style="width:30px;height:30px;border-radius:7px;background:${tradeBg[j.trade]||'rgba(255,255,255,.1)'};display:flex;align-items:center;justify-content:center;font-size:14px">${tradeIc[j.trade]||'🔧'}</div>
+              <div>
+                <div style="font-weight:600;color:var(--t1)">${j.title}</div>
+                <div style="font-size:11px;color:var(--t3)">${j.bid_count} bid${j.bid_count!==1?'s':''}</div>
+              </div>
+            </div>
+          </td>
+          <td class="t2">${j.owner?.name||'?'}</td>
+          <td>${statusBadge(j.status)}</td>
+          <td>${j.payment_amount
+            ? `<span style="font-size:12px;font-weight:700;color:#34D399">$${j.payment_amount}</span>`
+            : '<span style="color:var(--t3);font-size:12px">—</span>'}</td>
+          <td>
+            <button onclick="viewJobConvos('${j.id}')"
+              style="background:rgba(14,116,144,.12);border:1px solid rgba(14,116,144,.25);color:#0E7490;padding:5px 12px;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;font-family:var(--fd)">
+              View Convos →
+            </button>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table></div>`;
+}
+
+
+function closeChat() {
+  document.getElementById('chat-overlay').classList.remove('open');
+}
+
+function payments() {
+  const all = D.transactions || [];
+  const stats = D.stats?.payments || {};
+  return `
+    <div class="pg-title">Transactions</div>
+    <div class="pg-sub">${all.length} total transactions</div>
+
+    <div class="g3 mb24">
+      <div class="card-sm">
+        <div style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.08em;margin-bottom:8px">GROSS VOLUME</div>
+        <div style="font-size:24px;font-weight:800;color:#34D399">${fc(stats.gross_volume||0)}</div>
+        <div style="font-size:12px;color:var(--t3);margin-top:4px">${stats.total_transactions||0} completed payments</div>
+      </div>
+      <div class="card-sm">
+        <div style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.08em;margin-bottom:8px">PLATFORM FEES</div>
+        <div style="font-size:24px;font-weight:800;color:#0E7490">${fc(stats.platform_fees||0)}</div>
+        <div style="font-size:12px;color:var(--t3);margin-top:4px">10% of gross volume</div>
+      </div>
+      <div class="card-sm">
+        <div style="font-size:11px;font-weight:700;color:var(--t3);letter-spacing:.08em;margin-bottom:8px">IN ESCROW</div>
+        <div style="font-size:24px;font-weight:800;color:#60A5FA">${fc(stats.pending||0)}</div>
+        <div style="font-size:12px;color:var(--t3);margin-top:4px">Held pending completion</div>
+      </div>
+    </div>
+
+    ${all.length === 0
+      ? `<div class="card" style="text-align:center;padding:60px;color:var(--t3)">
+          <div style="font-size:32px;margin-bottom:12px">💳</div>
+          <div style="font-size:15px;font-weight:600;color:var(--t1);margin-bottom:6px">No transactions yet</div>
+          <div style="font-size:13px">Transactions appear here when homeowners accept bids and pay.</div>
+         </div>`
+      : `<div class="tbl-wrap"><table>
+          <thead><tr>
+            <th>JOB</th><th>FROM</th><th>TO</th><th>AMOUNT</th>
+            <th>FEE</th><th>NET</th><th>STATUS</th><th>DATE</th>
+          </tr></thead>
+          <tbody>
+            ${all.map(t => `<tr>
+              <td>
+                <div style="font-weight:600;color:var(--t1);font-size:12px">${t.job_title||'Job'}</div>
+                <div style="font-size:11px;color:var(--t3)">${t.job_trade||''}</div>
+              </td>
+              <td class="t2">${t.homeowner_name||'?'}</td>
+              <td class="t2">${t.tradesman_name||'?'}</td>
+              <td class="t1">${fc(t.amount)}</td>
+              <td style="color:#0E7490">${fc(t.platform_fee||0)}</td>
+              <td style="color:#34D399">${fc((t.amount||0)-(t.platform_fee||0))}</td>
+              <td>${statusBadge(t.status)}</td>
+              <td class="t2">${ago(t.created_at)}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table></div>`}`;
+}
+
+async function viewJobConvos(jobId) {
+  const overlay = document.getElementById('chat-overlay');
+  const body    = document.getElementById('chat-body');
+  const title   = document.getElementById('chat-title');
+  overlay.classList.add('open');
+  body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--t3)"><span class="spin" style="font-size:24px;display:inline-block">⚙️</span></div>';
+  try {
+    const data = await fetchAdmin('/admin/conversations/' + jobId);
+    title.textContent = `"${data.job?.title||'Job'}" — Conversations`;
+    const txn = (D.transactions||[]).find(t=>t.job_id===jobId);
+    body.innerHTML = `
+      ${txn ? `
+        <div style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:12px 14px;margin-bottom:18px">
+          <div style="font-size:12px;font-weight:700;color:#34D399;margin-bottom:6px">💳 Payment Record</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
+            <div><span style="color:var(--t3)">Amount:</span> <strong>${fc(txn.amount)}</strong></div>
+            <div><span style="color:var(--t3)">Fee:</span> <strong style="color:#0E7490">${fc(txn.platform_fee||0)}</strong></div>
+            <div><span style="color:var(--t3)">Net payout:</span> <strong style="color:#34D399">${fc((txn.amount||0)-(txn.platform_fee||0))}</strong></div>
+            <div><span style="color:var(--t3)">Status:</span> ${statusBadge(txn.status)}</div>
+          </div>
+        </div>` : ''}
+      ${data.conversations.length === 0
+        ? '<div style="text-align:center;padding:30px;color:var(--t3);font-size:13px">No conversations on this job yet</div>'
+        : data.conversations.map(c => `
+          <div class="card-sm" style="margin-bottom:14px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <div class="row" style="gap:8px">
+                <div class="av" style="background:rgba(59,130,246,.15);color:#60A5FA">${c.bidder?.ini||ini(c.bidder?.name||'?')}</div>
+                <div>
+                  <div style="font-size:13px;font-weight:700">${c.bidder?.name||'Tradesman'}</div>
+                  <div style="font-size:11px;color:var(--t3)">${c.bidder?.email||''} · ${c.message_count} message${c.message_count!==1?'s':''}</div>
+                </div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-size:15px;font-weight:800;color:#0E7490">$${c.bid?.price||0}</div>
+                ${statusBadge(c.bid?.status||'pending')}
+              </div>
+            </div>
+            ${c.messages.length === 0
+              ? '<div style="text-align:center;padding:14px;color:var(--t3);font-size:12px;background:rgba(255,255,255,.03);border-radius:8px">No messages yet</div>'
+              : `<div class="chat-wrap" style="max-height:340px">
+                  ${c.messages.map(m => {
+                    const isHO = m.sender_id === data.job?.owner_id;
+                    const snm  = isHO ? (data.userA?.name||'Homeowner') : (c.bidder?.name||'Tradesman');
+                    const side = isHO ? 'out' : 'in';
+                    return `<div class="msg-row ${side}">
+                      <div class="msg-bubble ${side}">${m.text||m.tx||''}</div>
+                      <div class="msg-meta">${snm} · ${ago(m.created_at||m.t)}</div>
+                    </div>`;
+                  }).join('')}
+                </div>`}
+          </div>`).join('')}`;
+  } catch(err) {
+    body.innerHTML = `<div style="padding:20px;color:var(--red)">${err.message}</div>`;
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+refresh();
+setInterval(refresh, 30000); // auto-refresh every 30s
+</script>
+</body>
+</html>

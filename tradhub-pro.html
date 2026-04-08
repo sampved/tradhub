@@ -1,0 +1,2607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TradHub Pro — Tradesman Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+:root{
+  --bg:#07080D;--bg2:#0D1018;--bg3:#111520;--bg4:#161A2A;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --amber:#0E7490;--amber2:#38BDF8;--adim:rgba(14,116,144,0.15);--aglow:rgba(14,116,144,0.28);
+  --teal:#10B981;--teal2:#34D399;--tdim:rgba(16,185,129,0.15);--tglow:rgba(16,185,129,0.35);
+  --coral:#F43F5E;--coral2:#FB7185;--cdim:rgba(244,63,94,0.15);
+  --blue:#3B82F6;--blue2:#60A5FA;--bdim:rgba(59,130,246,0.15);
+  --violet:#8B5CF6;--violet2:#A78BFA;--vdim:rgba(139,92,246,0.15);
+  --t1:#F1F5F9;--t2:#38BDF8;--t3:#0E7490;
+  --fn:'Outfit',sans-serif;--fd:'Playfair Display',serif;
+  --ease:cubic-bezier(0.4,0,0.2,1);
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--fn);background:var(--bg);color:var(--t1);font-size:14px}
+button,input,select,textarea{font-family:var(--fn)}
+button{cursor:pointer;transition:all 0.18s var(--ease)}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:4px}
+#bgc{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+/* ── LAYOUT ── */
+.app{position:relative;z-index:1;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+/* ── HEADER ── */
+.hdr{height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;
+  background:rgba(7,8,13,0.88);backdrop-filter:blur(24px);border-bottom:1px solid var(--border);
+  position:relative;z-index:100;flex-shrink:0}
+.logo{display:flex;align-items:center;gap:11px}
+.lmark{width:44px;height:44px;border-radius:11px;background:#0F2D3D;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:9px}
+.lbar1{width:26px;height:5px;border-radius:2.5px;background:#ECFEFF}
+.lbar2{width:26px;height:5px;border-radius:2.5px;background:#38BDF8}
+.lbar3{width:26px;height:5px;border-radius:2.5px;background:#0E7490}
+.ltxt{font-family:var(--fd);font-size:20px;font-weight:700;color:var(--t1);letter-spacing:-0.5px}
+.lai{display:inline-flex;align-items:center;justify-content:center;background:#0E7490;
+  color:#F5F0EB;font-size:9px;font-weight:700;letter-spacing:1px;
+  border-radius:8px;padding:2px 7px;margin-left:5px;vertical-align:middle}
+.rsw{}
+.rbtn{padding:6px 16px;border-radius:999px;font-size:12px;font-weight:600;border:none;
+  background:transparent;color:var(--t2);letter-spacing:0.03em}
+.rbtn.on{background:#0E7490;color:#F5F0EB;box-shadow:0 0 14px rgba(14,116,144,0.35)}
+.rbtn:hover:not(.on){color:var(--t1);background:rgba(255,255,255,0.07)}
+.hdrr{display:flex;align-items:center;gap:8px}
+.ibtn{width:36px;height:36px;border-radius:9px;border:1px solid var(--border);
+  background:rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--t2);font-size:15px;position:relative}
+.ibtn:hover{border-color:var(--border2);background:rgba(255,255,255,0.08);color:var(--t1)}
+.npip{position:absolute;top:7px;right:7px;width:6px;height:6px;background:var(--coral);
+  border-radius:50%;border:1.5px solid var(--bg);animation:pip 2s infinite}
+@keyframes pip{0%,100%{box-shadow:0 0 0 0 rgba(244,63,94,0.6)}50%{box-shadow:0 0 0 4px rgba(244,63,94,0)}}
+.avhdr{width:36px;height:36px;border-radius:9px;background:rgba(14,116,144,0.15);
+  border:1px solid rgba(14,116,144,0.3);color:var(--amber);font-size:12px;font-weight:700;
+  display:flex;align-items:center;justify-content:center}
+
+/* ── MAIN ── */
+.mn{flex:1;display:flex;overflow:hidden;min-height:0}
+
+/* ── SIDEBAR ── */
+.sb{width:205px;flex-shrink:0;overflow-y:auto;background:rgba(9,11,19,0.75);
+  backdrop-filter:blur(20px);border-right:1px solid var(--border);padding:12px 8px}
+.nl{font-size:10px;font-weight:700;color:var(--t3);letter-spacing:0.1em;
+  text-transform:uppercase;padding:12px 10px 4px}
+.ni{display:flex;align-items:center;gap:10px;padding:8px 11px;border-radius:9px;
+  cursor:pointer;font-size:13px;font-weight:500;color:var(--t2);
+  border:none;background:transparent;width:100%;text-align:left;position:relative;margin-bottom:1px}
+.ni:hover{background:rgba(255,255,255,0.05);color:var(--t1)}
+.ni.on{background:rgba(14,116,144,0.13);color:var(--amber);border:1px solid rgba(14,116,144,0.20)}
+.ni.on::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);
+  width:3px;height:55%;background:var(--amber);border-radius:0 3px 3px 0;box-shadow:0 0 7px var(--aglow)}
+.nico{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.nbdg{margin-left:auto;background:var(--amber);color:#ECFEFF;font-size:10px;
+  font-weight:800;padding:1px 6px;border-radius:999px}
+
+/* ── PAGE ── */
+.pg{flex:1;overflow-y:auto;padding:26px;min-height:0}
+.pgmap{padding:0;overflow:hidden}
+
+/* ── CARDS ── */
+.card{background:rgba(20,24,38,0.9);backdrop-filter:blur(16px);
+  border:1px solid var(--border);border-radius:16px;padding:20px}
+.card:hover{border-color:var(--border2)}
+.card+.card{margin-top:12px}
+
+/* ── METRICS ── */
+.mgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:22px}
+.mc{background:rgba(255,255,255,0.025);border:1px solid var(--border);
+  border-radius:13px;padding:16px;position:relative;overflow:hidden}
+.mc:hover{border-color:var(--border2)}
+.mc::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px}
+.ma::after{background:linear-gradient(90deg,transparent,var(--amber),transparent)}
+.mt::after{background:linear-gradient(90deg,transparent,var(--teal),transparent)}
+.mb::after{background:linear-gradient(90deg,transparent,var(--blue),transparent)}
+.mv::after{background:linear-gradient(90deg,transparent,var(--violet),transparent)}
+.mico{font-size:20px;margin-bottom:8px;display:block}
+.mval{font-size:26px;font-weight:800;color:var(--t1);line-height:1}
+.mlbl{font-size:11px;color:var(--t2);margin-top:3px;font-weight:500}
+.msub{font-size:11px;margin-top:3px;font-weight:600}
+.sup{color:var(--teal)}.sdn{color:var(--coral)}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:9px;
+  font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border2);
+  background:rgba(255,255,255,0.05);color:var(--t1);letter-spacing:0.02em}
+.btn:hover{background:rgba(255,255,255,0.09);border-color:rgba(255,255,255,0.18)}
+.btn:active{transform:scale(0.97)}
+.btp{background:#0E7490;color:#ECFEFF;border:none}
+.btp:hover{box-shadow:0 0 16px rgba(14,116,144,0.45);background:#0C647E}
+.bts{background:linear-gradient(135deg,#10B981,#059669);color:#000;border:none}
+.bts:hover{box-shadow:0 0 16px rgba(16,185,129,0.4)}
+.btd{background:linear-gradient(135deg,#F43F5E,#E11D48);color:white;border:none}
+.btg{background:transparent;border:1px solid var(--border2);color:var(--t2)}
+.btg:hover{color:var(--t1)}
+.bsm{padding:5px 12px;font-size:12px}
+.bxs{padding:3px 9px;font-size:11px}
+.bful{width:100%;justify-content:center}
+
+/* ── BADGES ── */
+.bdg{display:inline-flex;align-items:center;gap:3px;padding:3px 9px;
+  border-radius:999px;font-size:11px;font-weight:700;letter-spacing:0.03em}
+.ba{background:var(--adim);color:var(--amber2);border:1px solid rgba(14,116,144,0.2)}
+.bt{background:var(--tdim);color:var(--teal2);border:1px solid rgba(16,185,129,0.2)}
+.bc{background:var(--cdim);color:var(--coral2);border:1px solid rgba(244,63,94,0.2)}
+.bb{background:var(--bdim);color:var(--blue2);border:1px solid rgba(59,130,246,0.2)}
+.bgr{background:rgba(255,255,255,0.05);color:var(--t2);border:1px solid var(--border)}
+
+/* ── FORMS ── */
+.fg{margin-bottom:14px}
+.fl{display:block;font-size:11px;font-weight:700;color:var(--t2);margin-bottom:5px;
+  letter-spacing:0.06em;text-transform:uppercase}
+.fc_{width:100%;padding:9px 13px;border:1px solid var(--border2);border-radius:9px;
+  font-size:14px;color:var(--t1);background:rgba(255,255,255,0.04);outline:none;
+  transition:border-color 0.18s,box-shadow 0.18s}
+.fc_::placeholder{color:var(--t3)}
+.fc_:focus{border-color:rgba(14,116,144,0.6);background:rgba(14,116,144,0.04);box-shadow:0 0 0 3px rgba(14,116,144,0.12)}
+textarea.fc_{resize:vertical;min-height:80px;line-height:1.6}
+select.fc_ option{background:#111520;color:var(--t1)}
+
+/* ── PAGE TITLE ── */
+.ptit{font-family:var(--fd);font-size:24px;font-weight:700;color:var(--t1);line-height:1.2;margin-bottom:5px}
+.psub{font-size:13px;color:var(--t2);margin-bottom:22px}
+.sh{font-size:10px;font-weight:700;color:var(--t3);letter-spacing:0.1em;
+  text-transform:uppercase;margin-bottom:10px;margin-top:20px}
+.sh:first-child{margin-top:0}
+
+/* ── JOB CARDS ── */
+.jc{background:rgba(255,255,255,0.025);border:1px solid var(--border);
+  border-radius:14px;padding:16px;margin-bottom:9px;cursor:pointer;
+  position:relative;overflow:hidden;transition:border-color 0.2s,transform 0.2s}
+.jc::before{content:'';position:absolute;inset:0;opacity:0;
+  background:linear-gradient(135deg,rgba(14,116,144,0.06),transparent);
+  transition:opacity 0.25s;border-radius:inherit;pointer-events:none}
+.jc:hover{border-color:rgba(14,116,144,0.35);transform:translateY(-1px)}
+.jc:hover::before{opacity:1}
+.jc.sel{border-color:rgba(14,116,144,0.5);background:rgba(14,116,144,0.06)}
+.jc.urg{border-left:3px solid var(--coral)}
+
+/* ── TRADE ICON ── */
+.ti{width:42px;height:42px;border-radius:9px;display:flex;align-items:center;
+  justify-content:center;font-size:21px;flex-shrink:0;border:1px solid rgba(255,255,255,0.1)}
+
+/* ── TRADE PICKER ── */
+.tgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:18px}
+.ttile{border:1px solid var(--border);border-radius:12px;padding:14px 8px;
+  text-align:center;cursor:pointer;background:rgba(255,255,255,0.025);transition:all 0.18s}
+.ttile:hover{border-color:rgba(14,116,144,0.4);background:var(--adim);transform:translateY(-2px)}
+.ttile.on{border-color:var(--amber);background:var(--adim);box-shadow:0 0 14px var(--adim)}
+.tico{font-size:26px;margin-bottom:5px;display:block}
+.tnm{font-size:11px;font-weight:600;color:var(--t2)}
+.ttile.on .tnm{color:var(--amber)}
+
+/* ── AVATAR ── */
+.av{border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-weight:700;flex-shrink:0;border:1px solid rgba(255,255,255,0.1)}
+.avs{width:30px;height:30px;font-size:11px}
+.avm{width:40px;height:40px;font-size:14px}
+.avl{width:52px;height:52px;font-size:18px;border-radius:11px}
+
+/* ── TIMELINE ── */
+.tl{padding-left:20px;position:relative}
+.tl::before{content:'';position:absolute;left:6px;top:6px;bottom:6px;width:1px;background:var(--border)}
+.tli{position:relative;padding-bottom:16px}
+.tli:last-child{padding-bottom:0}
+.tld{position:absolute;left:-17px;top:5px;width:12px;height:12px;border-radius:50%;border:2px solid}
+.tdon{border-color:var(--teal);background:var(--teal);box-shadow:0 0 7px var(--tglow)}
+.tact{border-color:#0E7490;background:#0E7490;box-shadow:0 0 9px var(--aglow);animation:pact 1.5s infinite}
+@keyframes pact{0%,100%{box-shadow:0 0 0 0 var(--aglow)}50%{box-shadow:0 0 0 5px rgba(14,116,144,0)}}
+.tpnd{border-color:var(--border2);background:var(--bg3)}
+
+/* ── BID CARDS ── */
+.bcard{border:1px solid var(--border);border-radius:14px;padding:16px;
+  margin-bottom:10px;background:rgba(255,255,255,0.02);transition:border-color 0.18s}
+.bcard:hover{border-color:var(--border2)}
+.bcard.rec{border-color:rgba(16,185,129,0.4);background:rgba(16,185,129,0.04)}
+.bcard.acc{border-color:rgba(14,116,144,0.5);background:var(--adim)}
+
+/* ── MESSAGES ── */
+.mlist{display:flex;flex-direction:column;gap:9px;padding:16px;max-height:310px;overflow-y:auto}
+.mbub{max-width:72%;padding:10px 14px;border-radius:16px;font-size:14px;line-height:1.5}
+.mout{background:#0E7490;color:#ECFEFF;font-weight:500;
+  align-self:flex-end;border-bottom-right-radius:4px}
+.min{background:rgba(255,255,255,0.07);color:var(--t1);align-self:flex-start;
+  border-bottom-left-radius:4px;border:1px solid var(--border)}
+
+/* ── PROGRESS ── */
+.pbar{height:4px;background:rgba(255,255,255,0.07);border-radius:4px;overflow:hidden}
+.pfill{height:100%;background:linear-gradient(90deg,#0E7490,#38BDF8);
+  border-radius:4px;transition:width 0.5s}
+
+/* ── WIZARD ── */
+.wzsteps{display:flex;align-items:flex-start;margin-bottom:26px}
+.wzline{flex:1;height:2px;margin:0 7px;transition:background 0.4s}
+.done-line{background:var(--teal)}
+.pend-line{background:var(--border)}
+.wzcirc{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;transition:all 0.3s}
+.wcpnd{border:2px solid var(--border2);background:transparent;color:var(--t3)}
+.wcact{border:2px solid var(--amber);background:var(--adim);color:var(--amber);box-shadow:0 0 10px var(--aglow)}
+.wcdn{border:none;background:var(--teal);color:#000;box-shadow:0 0 9px var(--tglow)}
+.wzlbl{font-size:10px;font-weight:600;color:var(--t3);margin-top:4px;text-align:center;
+  letter-spacing:0.06em;text-transform:uppercase}
+.wzlbl.a{color:var(--amber)}.wzlbl.d{color:var(--teal)}
+
+/* ── MAP ── */
+.maptop{background:rgba(7,8,13,0.92);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);padding:11px 18px;
+  display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap}
+.mapsb{width:290px;flex-shrink:0;overflow-y:auto;
+  background:rgba(7,8,13,0.9);backdrop-filter:blur(16px);border-right:1px solid var(--border)}
+.mapsvgwrap{flex:1;position:relative}
+.mapsvgwrap svg{width:100%;height:100%;display:block}
+#leaflet-map{width:100%;height:100%;position:absolute;inset:0}
+.mapleg{position:absolute;top:11px;right:11px;background:rgba(7,8,13,0.92);
+  border:1px solid var(--border);border-radius:13px;padding:11px 13px;
+  backdrop-filter:blur(10px);pointer-events:none}
+
+/* ── TOASTS ── */
+.tswrap{position:fixed;bottom:22px;right:22px;z-index:9999;
+  display:flex;flex-direction:column;gap:7px;pointer-events:none}
+.ts{background:rgba(20,23,38,0.97);backdrop-filter:blur(20px);
+  border:1px solid var(--border2);color:var(--t1);padding:12px 16px;
+  border-radius:13px;font-size:13px;font-weight:500;
+  animation:tsin 0.3s cubic-bezier(0.34,1.56,0.64,1);max-width:290px;
+  display:flex;align-items:center;gap:9px}
+.ts.ok{border-color:rgba(16,185,129,0.4);color:var(--teal2)}
+.ts.wn{border-color:rgba(14,116,144,0.4);color:#38BDF8}
+.ts.er{border-color:rgba(244,63,94,0.4);color:var(--coral2)}
+@keyframes tsin{from{transform:translateX(40px) scale(0.9);opacity:0}to{transform:none;opacity:1}}
+
+/* ── MODAL ── */
+.mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);
+  backdrop-filter:blur(8px);z-index:1000;align-items:center;justify-content:center;padding:20px}
+.mbg.op{display:flex}
+.mdl{background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:24px;
+  width:100%;max-width:450px;box-shadow:0 40px 80px rgba(0,0,0,0.6);
+  animation:mdin 0.25s cubic-bezier(0.34,1.2,0.64,1);max-height:85vh;overflow-y:auto}
+@keyframes mdin{from{transform:scale(0.92) translateY(10px);opacity:0}to{transform:none;opacity:1}}
+.mhdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.mtit{font-size:17px;font-weight:700}
+.mcls{width:28px;height:28px;border-radius:7px;border:1px solid var(--border);
+  background:rgba(255,255,255,0.05);cursor:pointer;display:flex;align-items:center;
+  justify-content:center;font-size:13px;color:var(--t2)}
+.mcls:hover{color:var(--t1)}
+
+/* ── NOTIF ROWS ── */
+.nrow{display:flex;gap:12px;padding:14px;border-bottom:1px solid var(--border);cursor:pointer}
+.nrow:hover{background:rgba(255,255,255,0.03)}
+.nrow.unrd{background:rgba(14,116,144,0.07)}
+.nico2{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;
+  justify-content:center;flex-shrink:0;font-size:16px}
+
+/* ── STARS ── */
+.son{color:#38BDF8;font-size:14px;cursor:pointer}
+.soff{color:rgba(255,255,255,0.1);font-size:14px;cursor:pointer}
+
+/* ── SEARCH ── */
+.sbar{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,0.04);
+  border:1px solid var(--border);border-radius:9px;padding:8px 13px;margin-bottom:16px}
+.sbar:focus-within{border-color:rgba(14,116,144,0.5);background:rgba(14,116,144,0.05)}
+.sbar input{border:none;outline:none;font-size:14px;font-family:var(--fn);
+  color:var(--t1);background:transparent;flex:1}
+.sbar input::placeholder{color:var(--t3)}
+
+/* ── EMPTY ── */
+.emp{text-align:center;padding:48px 24px}
+.eico{font-size:40px;margin-bottom:12px;display:block;opacity:0.5}
+.etit{font-size:16px;font-weight:700;color:var(--t2);margin-bottom:5px}
+.etxt{font-size:13px;color:var(--t3)}
+
+/* ── UTILS ── */
+.frow{display:flex;align-items:center}
+.fjb{display:flex;align-items:center;justify-content:space-between}
+.fwrap{flex-wrap:wrap}
+.g4{gap:4px}.g6{gap:6px}.g8{gap:8px}.g12{gap:12px}.g16{gap:16px}
+.mb4{margin-bottom:4px}.mb8{margin-bottom:8px}.mb12{margin-bottom:12px}
+.mb16{margin-bottom:16px}.mb20{margin-bottom:20px}.mb24{margin-bottom:24px}
+.mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}
+.t2{color:var(--t2)}.t3{color:var(--t3)}
+.ta{color:var(--amber)}.tt{color:var(--teal)}.tc{color:var(--coral)}
+.f5{font-weight:500}.f6{font-weight:600}.f7{font-weight:700}.f8{font-weight:800}
+.tright{text-align:right}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
+.wf{width:100%}
+.dv{height:1px;background:var(--border);margin:13px 0}
+.ptag{font-size:15px;font-weight:800;color:var(--amber);font-variant-numeric:tabular-nums}
+.fade{animation:fu 0.25s ease}
+@keyframes fu{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media(max-width:720px){.sb{display:none}.mgrid{grid-template-columns:1fr 1fr}.tgrid{grid-template-columns:repeat(3,1fr)}}
+/* ── AUTH SCREEN ── */
+#auth-screen{position:fixed;inset:0;z-index:500;display:flex;align-items:stretch;overflow:hidden}
+.auth-left{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:48px 40px;background:rgba(7,8,13,0.92);backdrop-filter:blur(24px);overflow-y:auto;
+  border-right:1px solid var(--border)}
+.auth-right{width:48%;flex-shrink:0;background:rgba(10,12,22,0.6);
+  backdrop-filter:blur(12px);display:flex;flex-direction:column;justify-content:center;
+  padding:60px 50px;position:relative;overflow:hidden}
+@media(max-width:860px){.auth-right{display:none}.auth-left{border-right:none}}
+.auth-box{width:100%;max-width:400px}
+.auth-logo{display:flex;align-items:center;gap:14px;margin-bottom:36px}
+.auth-lmark{width:48px;height:48px;border-radius:12px;background:#0F2D3D;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:10px}
+.auth-lmark .lbar1{width:28px;height:6px;border-radius:3px;background:#ECFEFF}
+.auth-lmark .lbar2{width:28px;height:6px;border-radius:3px;background:#38BDF8}
+.auth-lmark .lbar3{width:28px;height:6px;border-radius:3px;background:#0E7490}
+.auth-ltxt{font-family:var(--fd);font-size:24px;font-weight:700;color:var(--t1);letter-spacing:-0.5px}
+.auth-ltxt .lai{display:inline-flex;align-items:center;justify-content:center;
+  background:#0E7490;color:#F5F0EB;font-size:10px;font-weight:700;letter-spacing:1px;
+  border-radius:9px;padding:2px 8px;margin-left:6px;vertical-align:middle}
+.auth-title{font-family:var(--fd);font-size:28px;font-weight:700;color:var(--t1);
+  line-height:1.2;margin-bottom:6px}
+.auth-sub{font-size:14px;color:var(--t2);margin-bottom:30px;line-height:1.6}
+.role-pick{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px}
+.rpick{border:1.5px solid var(--border2);border-radius:14px;padding:16px 14px;
+  cursor:pointer;background:rgba(255,255,255,0.03);transition:all 0.2s;text-align:left}
+.rpick:hover{border-color:rgba(14,116,144,0.4);background:rgba(14,116,144,0.05);transform:translateY(-2px)}
+.rpick.sel{border-color:var(--amber);background:rgba(14,116,144,0.08);
+  box-shadow:0 0 14px rgba(14,116,144,0.15)}
+.rpick-ico{font-size:28px;margin-bottom:8px;display:block}
+.rpick-title{font-size:14px;font-weight:700;color:var(--t1);margin-bottom:3px}
+.rpick-desc{font-size:11px;color:var(--t2);line-height:1.5}
+.rpick.sel .rpick-title{color:var(--amber)}
+.auth-divider{display:flex;align-items:center;gap:12px;margin:18px 0}
+.auth-divider span{font-size:11px;color:var(--t3);white-space:nowrap;font-weight:600;letter-spacing:.06em}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.social-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;
+  padding:10px;border:1px solid var(--border2);border-radius:10px;
+  background:rgba(255,255,255,0.04);color:var(--t1);font-size:13px;font-weight:600;
+  cursor:pointer;margin-bottom:8px;transition:all 0.18s}
+.social-btn:hover{border-color:var(--border2);background:rgba(255,255,255,0.08)}
+.social-ico{width:20px;height:20px;border-radius:50%;object-fit:contain;font-size:16px;
+  display:flex;align-items:center;justify-content:center}
+.auth-switch{font-size:13px;color:var(--t2);text-align:center;margin-top:20px}
+.auth-switch a{color:#0E7490;cursor:pointer;font-weight:600;text-decoration:none}
+.gbtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:11px;
+  border:1px solid var(--border2);background:var(--bg2);border-radius:10px;cursor:pointer;
+  font-size:14px;font-weight:600;color:var(--t1);transition:all .2s;margin-bottom:10px}
+.gbtn:hover{border-color:var(--amber);background:var(--adim)}
+.gbtn svg{flex-shrink:0}
+.auth-divider2{display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--t3);font-size:12px}
+.auth-divider2::before,.auth-divider2::after{content:'';flex:1;height:1px;background:var(--border)}
+.photo-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
+.photo-thumb{width:100%;aspect-ratio:1;border-radius:8px;object-fit:cover;border:1px solid var(--border)}
+.photo-add{width:100%;aspect-ratio:1;border-radius:8px;border:1px dashed var(--border2);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;gap:4px;color:var(--t3);font-size:11px;transition:all .2s}
+.photo-add:hover{border-color:var(--amber);color:var(--amber);background:var(--adim)}
+.ai-est{background:var(--adim);border:1px solid rgba(14,116,144,.3);border-radius:10px;
+  padding:12px 14px;margin-top:8px;font-size:13px}
+.ai-est-loading{display:flex;align-items:center;gap:8px;color:var(--t2)}
+.track-map{width:100%;height:200px;border-radius:10px;overflow:hidden;margin-top:10px;border:1px solid var(--border)}
+.track-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(16,185,129,.12);
+  border:1px solid rgba(16,185,129,.3);color:#10B981;border-radius:999px;
+  padding:4px 12px;font-size:12px;font-weight:600}
+.addr-suggestions{position:absolute;z-index:999;background:var(--bg2);border:1px solid var(--border2);
+  border-radius:10px;width:100%;top:calc(100% + 4px);left:0;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.addr-suggestion{padding:10px 14px;cursor:pointer;font-size:13px;color:var(--t1);transition:background .15s}
+.addr-suggestion:hover{background:var(--adim);color:var(--amber)}
+.addr-wrap{position:relative}
+.auth-switch a:hover{text-decoration:underline}
+.auth-steps{display:flex;gap:6px;margin-bottom:28px}
+.astep{flex:1;height:3px;border-radius:2px;background:var(--border);transition:background 0.3s}
+.astep.done{background:var(--teal)}
+.astep.act{background:var(--amber)}
+.trade-check-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:16px}
+.tck{border:1px solid var(--border);border-radius:10px;padding:11px 7px;
+  text-align:center;cursor:pointer;background:rgba(255,255,255,0.02);transition:all 0.18s}
+.tck:hover{border-color:rgba(14,116,144,0.4);background:rgba(14,116,144,0.06)}
+.tck.on{border-color:var(--amber);background:rgba(14,116,144,0.10)}
+.tck-ico{font-size:22px;margin-bottom:4px;display:block}
+.tck-nm{font-size:10px;font-weight:600;color:var(--t2)}
+.tck.on .tck-nm{color:var(--amber)}
+.pw-strength{height:3px;border-radius:2px;margin-top:6px;transition:all 0.3s}
+.pw-txt{font-size:11px;margin-top:4px;font-weight:600}
+.auth-feature{display:flex;gap:12px;align-items:flex-start;margin-bottom:22px}
+.af-ico{width:38px;height:38px;border-radius:10px;background:rgba(14,116,144,0.12);
+  border:1px solid rgba(14,116,144,0.2);display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0}
+.af-title{font-size:14px;font-weight:700;color:var(--t1);margin-bottom:3px}
+.af-desc{font-size:12px;color:var(--t2);line-height:1.5}
+.testimonial{background:rgba(255,255,255,0.04);border:1px solid var(--border);
+  border-radius:14px;padding:18px;margin-top:32px}
+.test-stars{color:#38BDF8;font-size:14px;letter-spacing:2px;margin-bottom:10px}
+.test-quote{font-size:13px;color:var(--t2);line-height:1.6;font-style:italic;margin-bottom:12px}
+.test-name{font-size:12px;font-weight:700;color:var(--t1)}
+.test-role{font-size:11px;color:var(--t3)}
+.field-err{font-size:11px;color:var(--coral2);margin-top:4px;font-weight:500}
+.input-wrap{position:relative}
+.input-wrap .eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  cursor:pointer;font-size:15px;color:var(--t3);user-select:none}
+.input-wrap .eye:hover{color:var(--t2)}
+.success-screen{text-align:center;padding:16px 0}
+.success-ico{font-size:64px;margin-bottom:16px;display:block;
+  animation:bounceIn 0.6s cubic-bezier(0.34,1.56,0.64,1)}
+@keyframes bounceIn{from{transform:scale(0) rotate(-20deg);opacity:0}to{transform:none;opacity:1}}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.success-title{font-family:var(--fd);font-size:26px;font-weight:700;margin-bottom:8px}
+.success-sub{font-size:14px;color:var(--t2);line-height:1.6;margin-bottom:24px}
+.user-chip{display:inline-flex;align-items:center;gap:8px;
+  background:rgba(14,116,144,0.08);border:1px solid rgba(14,116,144,0.18);
+  border-radius:999px;padding:4px 14px 4px 6px;cursor:pointer}
+.user-chip-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:11px;font-weight:700}
+.user-chip-name{font-size:13px;font-weight:600;color:var(--t1);max-width:100px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+</style>
+</head>
+<body>
+<canvas id="bgc"></canvas>
+<!-- AUTH SCREEN -->
+<div id="auth-screen" style="display:none">
+  <div class="auth-left">
+    <div class="auth-box" id="auth-box"></div>
+  </div>
+  <div class="auth-right" id="auth-right">
+    <!-- filled dynamically -->
+  </div>
+</div>
+
+<div class="app" id="app">
+  <header class="hdr">
+    <div class="logo">
+      <div class="lmark"><div class="lbar1"></div><div class="lbar2"></div><div class="lbar3"></div></div>
+      <span class="ltxt">TradHub<span class="lai" style="font-size:8px;padding:2px 6px">PRO</span></span>
+    </div>
+    <div id="role-sw"></div>
+    <div class="hdrr">
+      <button class="ibtn" onclick="go('notifications')">🔔<span class="npip" id="npip"></span></button>
+      <div id="hdr-user-area" style="display:flex;align-items:center;gap:8px"></div>
+    </div>
+  </header>
+  <div class="mn">
+    <nav class="sb" id="sb"></nav>
+    <main class="pg" id="pg"></main>
+  </div>
+</div>
+<div class="mbg" id="mbg"><div class="mdl" id="mdl"></div></div>
+<div class="tswrap" id="tsw"></div>
+
+<script>
+/* PARTICLE BACKGROUND */
+(()=>{
+  const c=document.getElementById('bgc'),x=c.getContext('2d');
+  let W,H,P=[];
+  const rs=()=>{W=c.width=innerWidth;H=c.height=innerHeight};rs();
+  addEventListener('resize',rs);
+  for(let i=0;i<55;i++)P.push({x:Math.random(),y:Math.random(),vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,r:Math.random()*1.2+.3,a:Math.random()*6.28});
+  const draw=()=>{
+    x.clearRect(0,0,W,H);x.fillStyle='#07080D';x.fillRect(0,0,W,H);
+    [[.2,.3,.38,'13,148,136',.022],[.8,.7,.35,'94,234,212',.016],[.5,.05,.28,'4,47,46',.018]].forEach(([ax,ay,r,col,a])=>{
+      const g=x.createRadialGradient(W*ax,H*ay,0,W*ax,H*ay,W*r);
+      g.addColorStop(0,`rgba(${col},${a})`);g.addColorStop(1,'transparent');
+      x.fillStyle=g;x.fillRect(0,0,W,H);
+    });
+    P.forEach(p=>{
+      p.x+=p.vx/W*80;p.y+=p.vy/H*80;
+      if(p.x<0)p.x=1;if(p.x>1)p.x=0;if(p.y<0)p.y=1;if(p.y>1)p.y=0;
+      x.beginPath();x.arc(p.x*W,p.y*H,p.r,0,6.28);
+      x.fillStyle=`rgba(14,116,144,${.18+Math.sin(p.a+=.006)*.08})`;x.fill();
+    });
+    for(let i=0;i<P.length;i++)for(let j=i+1;j<P.length;j++){
+      const dx=(P[i].x-P[j].x)*W,dy=(P[i].y-P[j].y)*H,d=Math.sqrt(dx*dx+dy*dy);
+      if(d<100){x.beginPath();x.moveTo(P[i].x*W,P[i].y*H);x.lineTo(P[j].x*W,P[j].y*H);
+        x.strokeStyle=`rgba(56,189,248,${.04*(1-d/100)})`;x.lineWidth=.5;x.stroke();}
+    }
+    requestAnimationFrame(draw);
+  };draw();
+})();
+
+/* ─────────────────────────────────────
+   API LAYER
+─────────────────────────────────────── */
+// API URL — update RENDER_URL to your actual Render service URL
+const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const RENDER_URL = 'https://herfeh-server.onrender.com/api'; // ← your Render URL
+const API = IS_LOCAL ? 'http://localhost:4000/api' : RENDER_URL;
+
+// ── Google OAuth — replace with your Client ID from console.cloud.google.com ──
+const GOOGLE_CLIENT_ID = '800240524044-19h1tkk4ecabopunishf0rc66q5p61o6.apps.googleusercontent.com';
+const IS_PRO_PORTAL = true; // Tradesman-only portal
+
+// ── Google Maps API Key — replace for address autocomplete ──
+const GMAPS_KEY = 'YOUR_GOOGLE_MAPS_API_KEY';
+let _token = localStorage.getItem('hf_token') || null;
+
+async function api(method, path, body) {
+  const opts = { method, headers: {'Content-Type':'application/json', ...(_token?{Authorization:'Bearer '+_token}:{})} };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(API + path, opts);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    if (res.status === 404 && method === 'GET') return Array.isArray(data) ? [] : {};
+    throw Object.assign(new Error(data.error || 'Request failed'), {status: res.status, data});
+  }
+  return data;
+}
+
+let _ws = null;
+function connectWS() {
+  if (!_token || _ws) return;
+  const WS_URL = IS_LOCAL
+    ? 'ws://localhost:4000/ws?token=' + _token
+    : 'wss://herfeh-server.onrender.com/ws?token=' + _token;
+  _ws = new WebSocket(WS_URL);
+  _ws.onmessage = (e) => {
+    try {
+      const msg = JSON.parse(e.data);
+      if(msg.type==='location_update'&&S.role==='homeowner'){
+        const inProgJob=S.jobs.find(j=>j.st==='in_progress'&&j.own===(S.user?.id||''));
+        handleTradesmanLocation(msg.lat,msg.lng,inProgJob?.id);return;
+      }
+      if (msg.type === 'notification') {
+        S.notifs.unshift(msg.notification);
+        const pip = document.getElementById('npip');
+        if (pip) pip.style.display = 'block';
+        toast(msg.notification.title);
+        rPg();
+      } else if (msg.type === 'message') {
+        const key = msg.message.job_id + '::' + msg.message.sender_id;
+        if (!S.msgs[key]) S.msgs[key] = [];
+        S.msgs[key].push(msg.message);
+        if (S.page === 'messages-home') rPg();
+        else toast('New message: ' + msg.message.text.substring(0, 40));
+      }
+    } catch {}
+  };
+  _ws.onclose = () => { _ws = null; setTimeout(connectWS, 3000); };
+  _ws.onerror = () => { _ws = null; };
+}
+
+/* STATE — UI only; data loaded from API */
+const S = {
+  role: 'homeowner', page: 'post-job', step: 1,
+  draft: {tr:'',ti:'',de:'',ur:'within48',b0:100,b1:300,ad:'',ci:'',zp:''},
+  tf:'all', sq:'', bv:'map', jv:null, bjid:null, ck:null, sortBy:'recent',
+  jobs:[], bids:{}, cons:{}, msgs:{}, notifs:[], revs:[], myBids:[],
+  user:null, profile:null,
+};
+
+/* Data loaders */
+async function loadJobs() {
+  try {
+    if (S.role === 'homeowner') {
+      const jobs = await api('GET', '/jobs/mine');
+      S.jobs = jobs.map(normalizeJob);
+      jobs.forEach(j => (j.bids||[]).forEach(b => { S.bids[b.id] = normalizeBid(b); }));
+    } else {
+      const p = new URLSearchParams({trade: S.tf});
+      if (USER_LOC.lat) { p.set('lat', USER_LOC.lat); p.set('lng', USER_LOC.lng); p.set('radius', '50'); }
+      const jobs = await api('GET', '/jobs?' + p);
+      S.jobs = jobs.map(normalizeJob);
+      jobs.forEach(j => (j.bids||[]).forEach(b => { S.bids[b.id] = normalizeBid(b); }));
+    }
+  } catch(e) { if(e.status!==404) throw e; }
+}
+async function loadMyBids() {
+  try {
+    const bids = await api('GET', '/bids/mine');
+    S.myBids = bids.map(b => b.id);
+    bids.forEach(b => { S.bids[b.id] = normalizeBid(b); });
+  } catch(e) { if(e.status!==404) throw e; S.myBids=[]; }
+}
+async function loadNotifications() {
+  try {
+    const notifs = await api('GET', '/notifications');
+    S.notifs = notifs.map(n => ({...n, ty:n.type, ti:n.title, bo:n.body, t:n.created_at, rd:!!n.read, lk:n.link}));
+  } catch(e) { if(e.status!==404) throw e; S.notifs=[]; }
+}
+async function loadReviews() {
+  if (!S.user) return;
+  const revs = await api('GET', '/reviews/user/' + S.user.id);
+  S.revs = revs.map(r => ({...r, rt:r.rating, tx:r.text, t:r.created_at}));
+}
+
+/* Shape normalizers */
+function normalizeJob(j) {
+  return {
+    id:j.id, own:j.owner_id, tr:j.trade, ti:j.title, de:j.description,
+    ur:j.urgency, b0:j.budget_min, b1:j.budget_max,
+    ad:j.address, ci:j.city||'', zp:j.zip||'',
+    lat:j.lat, lng:j.lng, st:j.status, at:j.created_at, dn:j.completed_at,
+    ac:j.accepted_bid_id, bids:(j.bids||[]).map(b=>b.id||b),
+    bid_count:j.bid_count||(j.bids||[]).length,
+    distance_miles:j.distance_miles,
+  };
+}
+function normalizeBid(b) {
+  return {
+    id:b.id, ji:b.job_id, ci:b.bidder_id,
+    pr:b.price, ty:b.bid_type||'flat', av:b.availability||'today',
+    ms:b.message||'', st:b.status, at:b.created_at,
+    bidder_name:b.bidder_name, bidder_ini:b.bidder_ini,
+    license:b.license, insured:b.insured, bonded:b.bonded,
+    rat:b.avg_rating||0, rv:b.review_count||0, bio:b.bio||'',
+    job_title:b.job_title, trade:b.trade, job_status:b.job_status,
+    budget_min:b.budget_min, budget_max:b.budget_max, owner_id:b.owner_id,
+  };
+}
+function conFromBid(bid) {
+  const t = gt(bid.trade||'');
+  return {id:bid.ci, nm:bid.bidder_name||'Contractor', ini:bid.bidder_ini||'?',
+    bg:t.bg, fg:t.mc, rat:bid.rat||0, rv:bid.rv||0, li:!!bid.license, ins:!!bid.insured, bi:bid.bio||''};
+}
+
+const TRADES=[
+  {id:'electrical',   lb:'Electrical',         ic:'⚡', bg:'rgba(234,179,8,.2)',   mc:'#EAB308'},
+  {id:'plumbing',     lb:'Plumbing',            ic:'🔧', bg:'rgba(59,130,246,.2)',  mc:'#3B82F6'},
+  {id:'painting',     lb:'Painting',            ic:'🎨', bg:'rgba(139,92,246,.2)',  mc:'#8B5CF6'},
+  {id:'drywall',      lb:'Drywall',             ic:'🧱', bg:'rgba(161,140,100,.2)', mc:'#A18C64'},
+  {id:'hvac',         lb:'HVAC',                ic:'❄️', bg:'rgba(14,116,144,.2)',  mc:'#0E7490'},
+  {id:'framing',      lb:'Framing',             ic:'🪵', bg:'rgba(180,83,9,.2)',    mc:'#B45309'},
+  {id:'foundation',   lb:'Foundation',          ic:'🏗️', bg:'rgba(100,116,139,.2)', mc:'#64748B'},
+  {id:'roofing',      lb:'Roofing',             ic:'🏠', bg:'rgba(244,63,94,.2)',   mc:'#F43F5E'},
+  {id:'cabinets',     lb:'Cabinets',            ic:'🗄️', bg:'rgba(16,185,129,.2)',  mc:'#10B981'},
+  {id:'furniture',    lb:'Furniture Assembly',  ic:'🛋️', bg:'rgba(99,102,241,.2)',  mc:'#6366F1'},
+  {id:'other',        lb:'Other',               ic:'🔩', bg:'rgba(107,114,128,.2)', mc:'#6B7280'},
+];
+const UL={within48:'Within 48 hrs',thisweek:'This week',thismonth:'This month',flexible:'Flexible'};
+const AL={today:'Today',tomorrow:'Tomorrow',thisweek:'This week',flexible:'Flexible'};
+// Dynamic job coordinates — populated by geocoding
+const JXY={};
+
+// User's real location
+let USER_LOC={lat:null,lng:null};
+
+// Geocoding cache
+const _geoCache={};
+
+// Geocode an address via Nominatim (free, no API key needed)
+async function geocodeAddr(addr){
+  if(_geoCache[addr])return _geoCache[addr];
+  try{
+    const q=encodeURIComponent(addr);
+    const r=await fetch('https://nominatim.openstreetmap.org/search?q='+q+'&format=json&limit=1',
+      {headers:{'Accept-Language':'en','User-Agent':'TradHub/1.0'}});
+    const d=await r.json();
+    if(d&&d[0]){
+      const c={lat:parseFloat(d[0].lat),lng:parseFloat(d[0].lon)};
+      _geoCache[addr]=c;
+      return c;
+    }
+  }catch(e){}
+  return null;
+}
+
+// Small random offset so pins don't stack on same address
+function jitter(c,m=0.0008){
+  return{lat:c.lat+(Math.random()-.5)*m,lng:c.lng+(Math.random()-.5)*m};
+}
+
+// Geocode all jobs and populate JXY
+async function geocodeAllJobs(){
+  const jobs=S.jobs.filter(j=>j.ad&&j.ci);
+  await Promise.all(jobs.map(async j=>{
+    if(JXY[j.id])return;
+    const full=j.ad+', '+j.ci;
+    const c=await geocodeAddr(full);
+    if(c)JXY[j.id]=jitter(c);
+  }));
+}
+
+// Get real user GPS location, fall back to IP geolocation
+async function getUserLocation(){
+  return new Promise(resolve=>{
+    if(!navigator.geolocation){resolve(null);return;}
+    navigator.geolocation.getCurrentPosition(
+      pos=>{USER_LOC={lat:pos.coords.latitude,lng:pos.coords.longitude};resolve(USER_LOC);},
+      async ()=>{
+        try{
+          const r=await fetch('https://ipapi.co/json/');
+          const d=await r.json();
+          if(d.latitude){USER_LOC={lat:d.latitude,lng:d.longitude};resolve(USER_LOC);return;}
+        }catch(e){}
+        resolve(null);
+      },
+      {timeout:6000,maximumAge:300000}
+    );
+  });
+}
+
+const gt=id=>TRADES.find(t=>t.id===id)||{lb:id,ic:'🔧',bg:'rgba(255,255,255,.1)',mc:'#888'};
+const ago=ts=>{const d=Date.now()-ts,m=~~(d/6e4),h=~~(d/36e5),dy=~~(d/864e5);return d<6e4?'just now':d<36e5?m+'m ago':d<864e5?h+'h ago':dy+'d ago'};
+const fdt=ts=>new Date(ts).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+const fc=n=>'$'+Math.round(n).toLocaleString();
+const uid=p=>p+(Date.now()%1e6)+~~(Math.random()*999);
+const unrd=()=>S.notifs.filter(n=>!n.rd).length;
+const haversine=(lat1,lng1,lat2,lng2)=>{
+  const R=3958.8,dLat=(lat2-lat1)*Math.PI/180,dLng=(lng2-lng1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+};
+const jobDist=id=>{
+  if(!USER_LOC.lat||!JXY[id])return null;
+  return haversine(USER_LOC.lat,USER_LOC.lng,JXY[id].lat,JXY[id].lng);
+};
+const fmtDist=id=>{const d=jobDist(id);return d!==null?d<0.1?'<0.1 mi':d.toFixed(1)+' mi':''};
+const strs=(r,n=5)=>[...Array(n)].map((_,i)=>`<span class="${i<Math.round(r)?'son':'soff'}">★</span>`).join('');
+function jst(j){
+  if(j.st==='completed')return'<span class="bdg bt">✓ Completed</span>';
+  if(j.st==='inprogress')return'<span class="bdg ba">⚡ In Progress</span>';
+  if(j.st==='bidding')return`<span class="bdg bb">${j.bids.length} bid${j.bids.length!==1?'s':''}</span>`;
+  return'<span class="bdg bgr">Draft</span>';
+}
+
+function toast(msg,t='ok'){
+  const w=document.getElementById('tsw'),ico={ok:'✅',wn:'⚠️',er:'❌'};
+  const el=document.createElement('div');el.className=`ts ${t}`;
+  el.innerHTML=`<span>${ico[t]||'✅'}</span><span>${msg}</span>`;w.appendChild(el);
+  setTimeout(()=>{el.style.transition='opacity .4s,transform .4s';el.style.opacity='0';el.style.transform='translateX(20px)';setTimeout(()=>el.remove(),400)},3000);
+}
+function oMdl(h){document.getElementById('mdl').innerHTML=h;document.getElementById('mbg').classList.add('op')}
+function cMdl(){document.getElementById('mbg').classList.remove('op')}
+document.getElementById('mbg').addEventListener('click',e=>{if(e.target===document.getElementById('mbg'))cMdl()});
+
+/* NAV */
+const NHO=[{id:'post-job',ic:'✦',lb:'Post a Job',sc:'Jobs'},{id:'review-bids',ic:'⬡',lb:'Review Bids',bd:()=>S.jobs.filter(j=>j.own===(S.user?.id||'')&&j.st==='bidding'&&j.bids.length>0).reduce((a,j)=>a+j.bids.length,0)||null},{id:'my-jobs',ic:'◎',lb:'My Jobs'},{id:'messages-home',ic:'◈',lb:'Messages',sc:'Account'},{id:'notifications',ic:'◉',lb:'Notifications',bd:()=>unrd()||null},{id:'account',ic:'◐',lb:'Account'}];
+const NTR=[{id:'browse-jobs',ic:'⊕',lb:'Browse Jobs',sc:'Work'},{id:'my-bids',ic:'⬡',lb:'My Bids',bd:()=>S.myBids.length||null},{id:'active-jobs-t',ic:'◎',lb:'Active Jobs'},{id:'earnings',ic:'◈',lb:'Earnings',sc:'Business'},{id:'reviews',ic:'★',lb:'Reviews'},{id:'my-profile',ic:'◐',lb:'My Profile',sc:'Account'},{id:'notifications',ic:'◉',lb:'Notifications',bd:()=>unrd()||null}];
+const gnav=()=>S.role==='homeowner'?NHO:NTR;
+
+function rSb(){
+  const nav=gnav();let h='',last='';
+  nav.forEach(n=>{
+    if(n.sc&&n.sc!==last){h+=`<div class="nl">${n.sc}</div>`;last=n.sc}
+    const b=n.bd&&n.bd();
+    h+=`<button class="ni${S.page===n.id?' on':''}" onclick="go('${n.id}')"><span class="nico">${n.ic}</span>${n.lb}${b?`<span class="nbdg">${b}</span>`:''}</button>`;
+  });
+  document.getElementById('sb').innerHTML=h;
+}
+
+function go(p){
+  // If navigating away from map, destroy Leaflet so it reinitialises fresh next visit
+  if(S.page==='browse-jobs'&&p!=='browse-jobs'&&window._leafMap){
+    window._leafMap.remove();window._leafMap=null;_leafMarkers={};
+  }
+  S.page=p;rSb();rPg();document.getElementById('pg').scrollTop=0;
+}
+
+function setRole(r){
+  S.role=r;S.page=r==='homeowner'?'post-job':'browse-jobs';
+  // Show a non-clickable role badge instead of the switcher
+  const rsw=document.getElementById('role-sw');
+  if(rsw){
+    const isHO=r==='homeowner';
+    rsw.innerHTML=`<div style="display:flex;align-items:center;gap:6px;background:${isHO?'rgba(14,116,144,.12)':'rgba(14,116,144,.08)'};border:1px solid ${isHO?'rgba(14,116,144,.3)':'rgba(59,130,246,.3)'};border-radius:999px;padding:5px 13px;font-size:12px;font-weight:700;color:${isHO?'var(--amber)':'var(--amber)'}">${isHO?'🏠 Homeowner':'🔧 Tradesman'}</div>`;
+  }
+  const u=S.user;
+  const ini=u?(u.ini||u.name[0]||'U'):(r==='homeowner'?'HO':'TR');
+  const havEl=document.getElementById('hav');if(havEl)havEl.textContent=ini;
+  rSb();rPg();
+}
+
+function rPg(){
+  const el=document.getElementById('pg');
+  const isMap=S.page==='browse-jobs'&&S.bv==='map';
+  el.className=isMap?'pg pgmap fade':'pg fade';
+  const m={'post-job':pPJ,'review-bids':pRB,'my-jobs':pMJ,'messages-home':pMG,'notifications':pNT,'account':pAC,'browse-jobs':pBR,'my-bids':pMB,'active-jobs-t':pAT,'earnings':pEA,'reviews':pRV,'my-profile':pPR};
+  el.innerHTML=(m[S.page]||pPJ)();
+  if(S.page==='messages-home'){const ml=el.querySelector('#mlist');if(ml)ml.scrollTop=ml.scrollHeight}
+  document.getElementById('npip').style.display=unrd()>0?'block':'none';
+}
+
+/* POST JOB */
+function pPJ(){
+  const si=[{l:'Trade'},{l:'Details'},{l:'Location'},{l:'Review'}];
+  let wh='<div class="wzsteps mb24">';
+  si.forEach((s,i)=>{
+    const n=i+1,dn=n<S.step,ac=n===S.step;
+    wh+=`<div style="flex:1;display:flex;flex-direction:column;align-items:center">
+      <div class="frow" style="width:100%">
+        ${i>0?`<div class="wzline ${n<=S.step?'done-line':'pend-line'}"></div>`:'<div style="flex:1"></div>'}
+        <div class="wzcirc ${dn?'wcdn':ac?'wcact':'wcpnd'}">${dn?'✓':n}</div>
+        ${i<si.length-1?`<div class="wzline ${n<S.step?'done-line':'pend-line'}"></div>`:'<div style="flex:1"></div>'}
+      </div>
+      <div class="wzlbl ${dn?'d':ac?'a':''}">${s.l}</div>
+    </div>`;
+  });wh+='</div>';
+  let body='';
+  if(S.step===1){
+    body=`<div class="mb20 f7" style="font-size:16px">What trade do you need?</div>
+    <div class="tgrid">${TRADES.map(t=>`<div class="ttile${S.draft.tr===t.id?' on':''}" onclick="selTr('${t.id}')"><span class="tico">${t.ic}</span><div class="tnm">${t.lb}</div></div>`).join('')}</div>
+    <div class="frow" style="justify-content:flex-end"><button class="btn btp" onclick="nxS()" ${!S.draft.tr?'disabled style="opacity:.4;cursor:not-allowed"':''}>Continue →</button></div>`;
+  }else if(S.step===2){
+    body=`<div class="mb20 f7" style="font-size:16px">Describe the job</div>
+    <div class="fg"><label class="fl">Job title</label><input class="fc_" id="jt" placeholder="e.g. Fix leaking kitchen sink" value="${S.draft.ti}" oninput="debouncedAiEst()"></div>
+    <div class="fg"><label class="fl">Description</label><textarea class="fc_" id="jd" placeholder="Describe the issue in detail — the more you share, the better the AI estimate…" oninput="debouncedAiEst()">${S.draft.de}</textarea></div>
+    <div class="fg">
+      <label class="fl" style="display:flex;align-items:center;justify-content:space-between">
+        <span>Photos <span style="color:var(--t3);font-weight:400;font-size:11px">(optional — helps tradesmen quote accurately)</span></span>
+      </label>
+      <div class="photo-grid" id="photo-grid">
+        ${(S.draft.photos||[]).map((p,i)=>`<div style="position:relative"><img class="photo-thumb" src="${p}"><div onclick="rmPhoto(${i})" style="position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;color:white">✕</div></div>`).join('')}
+        ${(S.draft.photos||[]).length<4?`<label class="photo-add" for="photo-inp" title="Add photo"><span style="font-size:22px">📷</span><span>Add photo</span></label><input type="file" id="photo-inp" accept="image/*" multiple style="display:none" onchange="addPhotos(this)">`:''}</div>
+    </div>
+    <div id="ai-est-box" style="display:${S.draft.ti||S.draft.de?'block':'none'}">
+      <label class="fl" style="display:flex;align-items:center;gap:6px"><span style="font-size:14px">✦</span> AI cost estimate</label>
+      <div class="ai-est" id="ai-est-content">
+        ${S.draft.aiEst?`<div style="font-size:14px;color:var(--t1);font-weight:600;margin-bottom:4px">${S.draft.aiEst.range}</div><div style="font-size:12px;color:var(--t2)">${S.draft.aiEst.note}</div>`:`<div class="ai-est-loading"><span style="animation:spin 1s linear infinite;display:inline-block">⟳</span> Estimating cost based on your description…</div>`}
+      </div>
+    </div>
+    <div class="g2" style="margin-top:12px">
+      <div class="fg"><label class="fl">Urgency</label><select class="fc_" id="ju">${Object.entries(UL).map(([v,l])=>`<option value="${v}"${S.draft.ur===v?' selected':''}>${l}</option>`).join('')}</select></div>
+      <div class="fg"><label class="fl">Budget estimate</label><select class="fc_" id="jb">
+        <option value="0-100"${S.draft.b0===0?' selected':''}>Under $100</option>
+        <option value="100-300"${S.draft.b0===100?' selected':''}>$100–$300</option>
+        <option value="300-600"${S.draft.b0===300?' selected':''}>$300–$600</option>
+        <option value="600-1000"${S.draft.b0===600?' selected':''}>$600–$1,000</option>
+        <option value="1000-2500"${S.draft.b0===1000?' selected':''}>$1,000–$2,500</option>
+        <option value="2500-5000"${S.draft.b0===2500?' selected':''}>$2,500–$5,000</option>
+        <option value="5000-10000"${S.draft.b0===5000?' selected':''}>$5,000–$10,000</option>
+        <option value="10000-25000"${S.draft.b0===10000?' selected':''}>$10,000–$25,000</option>
+        <option value="25000-50000"${S.draft.b0===25000?' selected':''}>$25,000–$50,000</option>
+        <option value="50000-100000"${S.draft.b0===50000?' selected':''}>$50,000–$100,000</option>
+        <option value="100000-999999"${S.draft.b0===100000?' selected':''}>$100,000+</option>
+      </select></div>
+    </div>
+    <div class="frow g8" style="justify-content:flex-end"><button class="btn btg" onclick="pvS()">← Back</button><button class="btn btp" onclick="sS2()">Continue →</button></div>`;
+  }else if(S.step===3){
+    body=`<div class="mb20 f7" style="font-size:16px">Where is the job?</div>
+    <div class="fg"><label class="fl">Street address</label>
+      <div class="addr-wrap">
+        <input class="fc_" id="ja" placeholder="Start typing your address…" value="${S.draft.ad}" autocomplete="off" oninput="addrAutocomplete(this,'ja-sug')">
+        <div class="addr-suggestions" id="ja-sug" style="display:none"></div>
+      </div>
+    </div>
+    <div class="g2">
+      <div class="fg"><label class="fl">City</label><input class="fc_" id="jci" placeholder="Your city" value="${S.draft.ci||''}"></div>
+      <div class="fg"><label class="fl">ZIP</label><input class="fc_" id="jz" placeholder="ZIP code" value="${S.draft.zp}"></div>
+    </div>
+    <div class="fg"><label class="fl">Property type</label><select class="fc_" id="jpt">
+      <option>Single family home</option><option>Condo / Apartment</option><option>Townhouse</option><option>Commercial</option></select></div>
+    <div class="frow g8" style="justify-content:flex-end"><button class="btn btg" onclick="pvS()">← Back</button><button class="btn btp" onclick="sS3()">Review →</button></div>`;
+  }else{
+    const t=gt(S.draft.tr);
+    body=`<div class="mb20 f7" style="font-size:16px">Review & post</div>
+    <div class="card mb16" style="background:rgba(14,116,144,.06);border-color:rgba(14,116,144,.3)">
+      <div class="frow g12 mb16"><div class="ti" style="background:${t.bg};font-size:24px;width:48px;height:48px">${t.ic}</div>
+      <div><div class="f8" style="font-size:17px">${S.draft.ti}</div><div class="t2" style="font-size:13px;margin-top:4px">${t.lb} · ${UL[S.draft.ur]}</div></div></div>
+      <p style="color:var(--t2);font-size:13px;line-height:1.7;margin-bottom:14px">${S.draft.de}</p>
+      <div class="dv"></div>
+      <div class="g2"><div><div class="t3" style="font-size:10px;margin-bottom:3px">Budget</div><div class="f7 ta">${fc(S.draft.b0)}–${S.draft.b1>=999999?'$100k+':S.draft.b1>=99999?'$100k':S.draft.b1>=9999?fc(S.draft.b0)+'–'+fc(S.draft.b1):fc(S.draft.b1)}</div></div>
+      <div><div class="t3" style="font-size:10px;margin-bottom:3px">Location</div><div class="f6" style="font-size:13px">${S.draft.ad}</div></div></div>
+    </div>
+    <div class="card mb16" style="background:rgba(16,185,129,.05);border-color:rgba(16,185,129,.2)">
+      <div class="frow g8 mb4"><span>📡</span><div class="f6 tt" style="font-size:13px">Ready to broadcast</div></div>
+      <div class="t2" style="font-size:13px">Visible to licensed contractors within 25 miles.</div>
+    </div>
+    <div class="frow g8" style="justify-content:flex-end"><button class="btn btg" onclick="pvS()">← Edit</button><button class="btn btp" onclick="subJob()" style="padding:10px 26px">🚀 Post Job</button></div>`;
+  }
+  return`<div><div class="mb24"><div class="ptit">Post a Job</div><div class="psub">Get competitive bids from vetted local tradesmen</div></div>${wh}<div class="card">${body}</div></div>`;
+}
+function selTr(id){S.draft.tr=id;rPg()}
+function nxS(){if(S.step<4){S.step++;rPg()}}
+function pvS(){if(S.step>1){S.step--;rPg()}}
+function sS2(){
+  const t=document.getElementById('jt')?.value.trim(),d=document.getElementById('jd')?.value.trim();
+  if(!t||!d){toast('Fill in title and description','er');return}
+  S.draft.ti=t;S.draft.de=d;S.draft.ur=document.getElementById('ju').value;
+  const bv=document.getElementById('jb').value.split('-');S.draft.b0=+bv[0];S.draft.b1=+bv[1];nxS();
+}
+function sS3(){
+  const a=document.getElementById('ja')?.value.trim();if(!a){toast('Enter an address','er');return}
+  const city=document.getElementById('jci')?.value.trim();
+  S.draft.ad=a;S.draft.ci=city;S.draft.zp=document.getElementById('jz')?.value.trim();nxS();
+}
+async function subJob() {
+  try {
+    const job = await api('POST', '/jobs', {
+      trade:S.draft.tr, title:S.draft.ti, description:S.draft.de,
+      urgency:S.draft.ur, budgetMin:S.draft.b0, budgetMax:S.draft.b1,
+      address:S.draft.ad, city:S.draft.ci, zip:S.draft.zp,
+    });
+    const n = normalizeJob(job);
+    S.jobs.unshift(n);
+    if (S.draft.ad) {
+      geocodeAddr(S.draft.ad + (S.draft.ci?', '+S.draft.ci:'')).then(c => {
+        if (c) { JXY[n.id] = jitter(c, 0.0004);
+          api('PATCH', '/jobs/'+n.id+'/coords', {lat:c.lat, lng:c.lng}).catch(()=>{}); }
+      });
+    }
+    S.draft = {tr:'',ti:'',de:'',ur:'within48',b0:100,b1:300,ad:'',ci:'',zp:'',photos:[],aiEst:null};
+    S.step = 1;
+    toast('Job posted! Bids will arrive soon 🎉'); go('review-bids');
+  } catch(err) { toast(err.message || 'Failed to post job', 'er'); }
+}
+
+/* REVIEW BIDS */
+function pRB(){
+  const ownerKey=S.user?.id||'';const mj=S.jobs.filter(j=>j.own===ownerKey&&(j.st==='bidding'||j.st==='inprogress'));
+  if(!mj.length)return`<div class="emp"><span class="eico">📋</span><div class="etit">No active jobs</div><button class="btn btp mt16" onclick="go('post-job')">Post a Job</button></div>`;
+  // Start tradesman GPS broadcast if tradesman with in_progress jobs
+  if(S.role==='tradesman'){const ipj=mj.filter(j=>j.st==='in_progress');if(ipj.length&&!window._trackingActive)startTrackingBroadcast();}
+  if(!S.bjid)S.bjid=mj[0].id;
+  const job=S.jobs.find(j=>j.id===S.bjid)||mj[0];S.bjid=job.id;
+  const t=gt(job.tr);
+  let tabs='<div class="frow g8 mb20 fwrap">';
+  mj.forEach(j=>tabs+=`<button class="btn bsm${S.bjid===j.id?' btp':' btg'}" onclick="S.bjid='${j.id}';rPg()">${gt(j.tr).ic} ${j.ti.substring(0,22)}${j.ti.length>22?'…':''}</button>`);
+  tabs+='</div>';
+  const W=530,H=160;
+  const miniMapId=`minimap-${job.id}`;
+  const mapHtml=`<div id="${miniMapId}" style="border-radius:13px;overflow:hidden;margin-bottom:16px;border:1px solid var(--border);height:160px"></div>`;
+  // Tracking: inject track panel for in_progress jobs
+  // (done after render via injectTrackPanels())
+  setTimeout(injectTrackPanels, 200);
+  // Async mini-map: geocode address if needed, then render
+  (async()=>{
+    await new Promise(r=>setTimeout(r,100));
+    const el=document.getElementById(miniMapId);
+    if(!el||el._lmap)return;
+
+    // Geocode if not cached
+    if(!JXY[job.id]&&job.ad&&job.ci){
+      const c=await geocodeAddr(job.ad+', '+job.ci);
+      if(c)JXY[job.id]=jitter(c,0.0004);
+    }
+    // Also get user loc if not yet fetched
+    if(!USER_LOC.lat) await getUserLocation();
+
+    const coord=JXY[job.id]||USER_LOC.lat?JXY[job.id]:null;
+    if(!coord){el.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--t3);font-size:12px">Location unavailable</div>';return;}
+
+    const m=L.map(miniMapId,{zoomControl:false,attributionControl:false,dragging:true,scrollWheelZoom:false});
+    el._lmap=m;
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:19}).addTo(m);
+    m.setView([coord.lat,coord.lng],15);
+    const t=gt(job.tr);
+    const pinIcon=L.divIcon({className:'',html:`<div style="width:34px;height:34px;border-radius:50%;background:${t.mc};border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,.6)">${t.ic}</div>`,iconSize:[34,34],iconAnchor:[17,17]});
+    L.marker([coord.lat,coord.lng],{icon:pinIcon}).addTo(m).bindPopup(`<b>${job.ti}</b><br>${job.ad}`);
+    // User location pin
+    if(USER_LOC.lat){
+      const userIcon=L.divIcon({className:'',html:`<div style="width:18px;height:18px;border-radius:50%;background:#0E7490;border:2px solid rgba(7,8,13,.9);box-shadow:0 0 0 5px rgba(14,116,144,.2)"></div>`,iconSize:[18,18],iconAnchor:[9,9]});
+      L.marker([USER_LOC.lat,USER_LOC.lng],{icon:userIcon}).addTo(m).bindPopup('Your location');
+    }
+  })();
+  let bh='';
+  if(!job.bids.length){bh=`<div class="emp" style="padding:28px 16px"><span class="eico">⏳</span><div class="etit">No bids yet</div><div class="etxt">Contractors are being notified.</div></div>`;}
+  else{
+    [...job.bids].sort((a,b)=>S.bids[a].pr-S.bids[b].pr).forEach((bid,i)=>{
+      const b=S.bids[bid],c=S.cons[b.ci],isR=i===0,isA=b.st==='accepted';
+      bh+=`<div class="bcard${isR?' rec':''}${isA?' acc':''}">
+        ${isR?'<div class="mb10"><span class="bdg bt">⭐ Recommended — lowest bid</span></div>':''}
+        <div class="fjb mb10">
+          <div class="frow g10"><div class="av avm" style="background:${c.bg};color:${c.fg}">${c.ini}</div>
+          <div><div class="f7" style="font-size:14px">${c.nm}</div>
+          <div class="frow g6 mt4"><div style="display:flex;gap:2px;font-size:12px">${strs(c.rat)}</div>
+          <span class="t2" style="font-size:11px">${c.rat} · ${c.rv} reviews · ${c.di}mi</span></div></div></div>
+          <div class="tright"><div class="ptag">${fc(b.pr)}</div><div class="t2" style="font-size:11px;margin-top:3px">${b.ty==='flat'?'flat rate':'+ parts'}</div></div>
+        </div>
+        <p class="mb10" style="font-size:13px;color:var(--t2);line-height:1.6;background:rgba(255,255,255,.03);padding:10px;border-radius:8px;border:1px solid var(--border)">"${b.ms}"</p>
+        <div class="frow g6 mb10 fwrap">
+          ${c.li?'<span class="bdg bt">✓ Licensed</span>':''}${c.ins?'<span class="bdg bgr">✓ Insured</span>':''}
+          <span class="bdg ba">🕐 ${AL[b.av]||b.av}</span><span class="bdg bb">${c.ex}yr exp</span>
+        </div>
+        ${isA?'<div class="bdg bt wf" style="justify-content:center;padding:8px;font-size:13px">✓ Bid Accepted</div>'
+          :`<div class="frow g8"><button class="btn bts" style="flex:1" onclick="accBid('${b.id}')">💳 Pay & Accept</button><button class="btn btg" onclick="openChat('${job.id}','${b.ci}')">💬 Message</button><button class="btn btg bsm" onclick="vProf('${b.ci}')">Profile</button></div>`}
+      </div>`;
+    });
+  }
+  return`<div><div class="mb24"><div class="ptit">Review Bids</div><div class="psub">Compare bids and select your contractor</div></div>
+  ${tabs}<div class="card"><div class="fjb mb14">
+    <div class="frow g10"><div class="ti" style="background:${t.bg}">${t.ic}</div>
+    <div><div class="f7" style="font-size:15px">${job.ti}</div><div class="t2" style="font-size:13px;margin-top:3px">${job.ci} · ${ago(job.at)}</div></div></div>${jst(job)}
+  </div>${mapHtml}<div class="sh">Bids (${job.bids.length})</div>${bh}</div></div>`;
+}
+async function accBid(bidId) {
+  const b = S.bids[bidId]; if (!b) return;
+  const job = S.jobs.find(j => j.id === b.ji); if (!job) return;
+  // Show payment modal instead of directly accepting
+  showPaymentModal(job, b);
+}
+
+async function showPaymentModal(job, bid) {
+  const fee     = Math.round(bid.pr * 0.10 * 100) / 100;
+  const payout  = Math.round((bid.pr - fee) * 100) / 100;
+  oMdl(`<div class="mhdr">
+    <div class="mtit">Confirm & Pay</div>
+    <button class="mcls" onclick="cMdl()">✕</button>
+  </div>
+  <div style="text-align:center;padding:8px 0 20px">
+    <div style="font-size:32px;margin-bottom:8px">💳</div>
+    <div style="font-size:16px;font-weight:700;color:var(--t1);margin-bottom:4px">Secure Payment</div>
+    <div style="font-size:13px;color:var(--t2)">Funds are held securely until the job is complete.</div>
+  </div>
+  <div style="background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px">
+    <div style="font-size:12px;font-weight:700;color:var(--t3);letter-spacing:.06em;margin-bottom:12px">PAYMENT BREAKDOWN</div>
+    <div class="fjb mb8"><span class="t2" style="font-size:13px">Job: ${job.ti}</span></div>
+    <div class="fjb mb8"><span class="t2" style="font-size:13px">Contractor</span><span class="f6" style="font-size:13px">${bid.bidder_name||'Contractor'}</span></div>
+    <div class="fjb mb8"><span class="t2" style="font-size:13px">Bid amount</span><span class="f6" style="font-size:14px">${fc(bid.pr)}</span></div>
+    <div class="fjb mb8"><span class="t2" style="font-size:13px">Platform fee (10%)</span><span style="font-size:13px;color:var(--t3)">−${fc(fee)}</span></div>
+    <div style="border-top:1px solid var(--border);margin:8px 0"></div>
+    <div class="fjb"><span class="f6">You pay today</span><span class="ptag" style="font-size:17px">${fc(bid.pr)}</span></div>
+    <div class="fjb mt4"><span class="t3" style="font-size:11px">Contractor receives</span><span class="t2" style="font-size:11px">${fc(payout)} after completion</span></div>
+  </div>
+  <div style="background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:10px;padding:12px;margin-bottom:16px">
+    <div style="font-size:12px;color:#34D399;font-weight:600;margin-bottom:4px">🔒 Protected payment</div>
+    <div style="font-size:12px;color:var(--t2)">Your payment is held in escrow. It's only released to the contractor when you mark the job as complete.</div>
+  </div>
+  <div id="pay-card-area" style="margin-bottom:16px">
+    <div class="fg"><label class="fl">Card number</label>
+      <input class="fc_" id="pay-card" placeholder="4242 4242 4242 4242" maxlength="19"
+        oninput="this.value=this.value.replace(/[^0-9]/g,'').replace(/(.{4})/g,'$1 ').trim()"></div>
+    <div class="g2" style="gap:10px">
+      <div class="fg"><label class="fl">Expiry</label><input class="fc_" id="pay-exp" placeholder="MM/YY" maxlength="5"
+        oninput="let v=this.value.replace(/[^0-9]/g,'');if(v.length>=2)v=v.slice(0,2)+'/'+v.slice(2);this.value=v"></div>
+      <div class="fg"><label class="fl">CVC</label><input class="fc_" id="pay-cvc" placeholder="123" maxlength="4"
+        oninput="this.value=this.value.replace(/[^0-9]/g,'')"></div>
+    </div>
+    <div style="font-size:11px;color:var(--t3);margin-top:6px;display:flex;gap:6px;align-items:center">
+      <span>🔐</span><span>Payments processed securely by Stripe. We never store your card details.</span>
+    </div>
+  </div>
+  <div id="pay-err" class="field-err" style="display:none;margin-bottom:10px"></div>
+  <button class="btn btp bful" style="padding:13px;font-size:14px;margin-bottom:8px"
+    onclick="confirmPayment('${job.id}','${bid.id}')">Pay ${fc(bid.pr)} & Confirm Bid →</button>
+  <button class="btn btg bful" style="padding:10px;font-size:13px" onclick="cMdl()">Cancel</button>`);
+}
+
+async function confirmPayment(jobId, bidId) {
+  const card = document.getElementById('pay-card')?.value.replace(/\s/g,'');
+  const exp  = document.getElementById('pay-exp')?.value;
+  const cvc  = document.getElementById('pay-cvc')?.value;
+  const errEl= document.getElementById('pay-err');
+  if (!card || card.length < 15) { errEl.textContent='Enter a valid card number'; errEl.style.display='block'; return; }
+  if (!exp  || exp.length < 5)   { errEl.textContent='Enter expiry (MM/YY)';      errEl.style.display='block'; return; }
+  if (!cvc  || cvc.length < 3)   { errEl.textContent='Enter CVC';                 errEl.style.display='block'; return; }
+
+  const btn = document.querySelector('#pay-card-area')?.nextElementSibling?.nextElementSibling;
+  const payBtn = document.querySelector('.mhdr')?.closest('.mbg')?.querySelector('.btn.btp.bful');
+  if (payBtn) { payBtn.disabled=true; payBtn.textContent='Processing…'; }
+
+  try {
+    // Step 1: Create payment intent
+    const intent = await api('POST', '/payments/create-intent', {jobId, bidId});
+
+    // Step 2: Confirm (in production this is where Stripe.js collects real card data)
+    const result = await api('POST', '/payments/confirm', {paymentId: intent.paymentId});
+
+    // Update local state
+    const job = S.jobs.find(j=>j.id===jobId);
+    const bid = S.bids[bidId];
+    if (job) { job.st='inprogress'; job.ac=bidId; job.payment_id=intent.paymentId; }
+    if (bid) { bid.st='accepted'; }
+    Object.values(S.bids).filter(x=>x.ji===jobId&&x.id!==bidId).forEach(x=>x.st='rejected');
+
+    cMdl();
+    toast('Payment secured! Work begins soon 🎉');
+    rPg();
+  } catch(err) {
+    if (payBtn) { payBtn.disabled=false; payBtn.textContent=`Pay & Confirm Bid →`; }
+    const errEl=document.getElementById('pay-err');
+    if(errEl){errEl.textContent=err.message||'Payment failed';errEl.style.display='block';}
+  }
+}
+function vProf(cid){
+  const c=S.cons[cid];
+  oMdl(`<div class="mhdr"><div class="mtit">Contractor Profile</div><button class="mcls" onclick="cMdl()">✕</button></div>
+  <div class="frow g14 mb16" style="gap:14px"><div class="av avl" style="background:${c.bg};color:${c.fg}">${c.ini}</div>
+  <div><div class="f7" style="font-size:16px">${c.nm}</div>
+  <div style="display:flex;gap:2px;font-size:14px;margin-top:5px">${strs(c.rat)}<span class="t2" style="font-size:12px;margin-left:7px">${c.rat} · ${c.rv}</span></div>
+  <div class="frow g6 mt8">${c.li?'<span class="bdg bt">✓ Licensed</span>':''}${c.ins?'<span class="bdg bgr">✓ Insured</span>':''}</div></div></div>
+  <div class="g3 mb14"><div class="mc ma" style="padding:12px"><div class="mval" style="font-size:20px">${c.jo}</div><div class="mlbl">Jobs</div></div>
+  <div class="mc mt" style="padding:12px"><div class="mval" style="font-size:20px">${c.ex}yr</div><div class="mlbl">Experience</div></div>
+  <div class="mc mb" style="padding:12px"><div class="mval" style="font-size:20px">${c.di}mi</div><div class="mlbl">Distance</div></div></div>
+  <p class="t2" style="font-size:13px;line-height:1.7">${c.bi}</p>`);
+}
+
+/* MY JOBS */
+function pMJ(){
+  const ownerKey=S.user?.id||'';const mj=S.jobs.filter(j=>j.own===ownerKey);
+  const act=mj.filter(j=>j.st==='inprogress'),opn=mj.filter(j=>j.st==='bidding'),dn=mj.filter(j=>j.st==='completed');
+  let h=`<div><div class="fjb mb24"><div><div class="ptit">My Jobs</div><div class="psub">Track your current and past projects</div></div><button class="btn btp" onclick="go('post-job')">+ New Job</button></div>`;
+  if(act.length){
+    h+=`<div class="sh">In Progress</div>`;
+    act.forEach(job=>{
+      const t=gt(job.tr),b=job.ac?S.bids[job.ac]:null,c=b?S.cons[b.ci]:null;
+      h+=`<div class="card mb16"><div class="fjb mb12">
+        <div class="frow g10"><div class="ti" style="background:${t.bg}">${t.ic}</div>
+        <div><div class="f7" style="font-size:15px">${job.ti}</div><div class="t2" style="font-size:13px;margin-top:3px">${job.ci}</div></div></div>
+        <span class="bdg ba">⚡ In Progress</span></div>
+        ${c?`<div class="frow g8 mb14" style="background:rgba(14,116,144,.06);border:1px solid rgba(14,116,144,.2);padding:11px;border-radius:9px">
+          <div class="av avs" style="background:${c.bg};color:${c.fg}">${c.ini}</div>
+          <div class="f6" style="font-size:13px;flex:1">${c.nm}</div>
+          <span class="ta f6" style="font-size:13px">Scheduled</span>
+          <button class="btn btg bxs" onclick="openChat('${job.id}','${c.id||b?.ci}')">💬</button></div>`:''}
+        <div class="tl">
+          <div class="tli"><div class="tld tdon"></div><div style="font-size:13px;font-weight:600">Job posted</div><div class="t2" style="font-size:12px;margin-top:1px">${fdt(job.at)}</div></div>
+          <div class="tli"><div class="tld tdon"></div><div style="font-size:13px;font-weight:600">Bid accepted</div><div class="t2" style="font-size:12px;margin-top:1px">${c?c.nm:''} · ${b?fc(b.pr):''}</div></div>
+          <div class="tli"><div class="tld tact"></div><div style="font-size:13px;font-weight:600">En route</div><div class="t2" style="font-size:12px;margin-top:1px">ETA 2:00 PM</div></div>
+          <div class="tli"><div class="tld tpnd"></div><div style="font-size:13px;font-weight:600;color:var(--t3)">Work completed</div></div>
+          <div class="tli"><div class="tld tpnd"></div><div style="font-size:13px;font-weight:600;color:var(--t3)">Payment & review</div></div>
+        </div>
+        <div class="dv"></div>
+        <div id="track-panel-${job.id}" style="margin-bottom:14px"></div>
+        <div class="frow g8"><button class="btn btg bsm" onclick="openChat('${job.id}','${c?c.id:''}')">💬 Message</button><button class="btn btd bsm" onclick="mrkDn('${job.id}')">✓ Mark Complete</button></div>
+      </div>`;
+    });
+  }
+  if(opn.length){
+    h+=`<div class="sh">Open for Bids</div>`;
+    opn.forEach(job=>{
+      const t=gt(job.tr);
+      h+=`<div class="jc" onclick="S.bjid='${job.id}';go('review-bids')"><div class="fjb">
+        <div class="frow g10"><div class="ti" style="background:${t.bg}">${t.ic}</div>
+        <div><div class="f6">${job.ti}</div><div class="t2" style="font-size:13px;margin-top:3px">Posted ${ago(job.at)}</div></div></div>
+        <div class="tright">${jst(job)}<div class="ptag mt8" style="font-size:14px">${fc(job.b0)}–${job.b1>=999999?'$100k+':job.b1>=9999?fc(job.b0)+'–'+fc(job.b1):fc(job.b1)}</div></div>
+      </div></div>`;
+    });
+  }
+  if(dn.length){
+    h+=`<div class="sh mt12">Completed</div>`;
+    dn.forEach(job=>{
+      const t=gt(job.tr),b=job.ac?S.bids[job.ac]:null,c=b?S.cons[b.ci]:null,rv=S.revs.find(r=>r.ji===job.id);
+      h+=`<div class="jc"><div class="fjb">
+        <div class="frow g10"><div class="ti" style="background:${t.bg}">${t.ic}</div>
+        <div><div class="f6">${job.ti}</div><div class="t2" style="font-size:13px;margin-top:3px">${c?c.nm:''} · ${job.dn?fdt(job.dn):''}</div></div></div>
+        <div class="tright"><div class="ptag" style="font-size:14px">${b?fc(b.pr):''}</div>
+        ${rv?`<div style="display:flex;gap:2px;margin-top:4px;justify-content:flex-end">${strs(rv.rt)}</div>`:`<button class="btn btp bxs mt4" onclick="opnRv('${job.id}')">Review</button>`}</div>
+      </div></div>`;
+    });
+  }
+  return h+'</div>';
+}
+async function mrkDn(jid) {
+  try {
+    // Try to capture payment first (releases funds to tradesman)
+    try {
+      const cap = await api('POST', '/payments/capture', {jobId: jid});
+      if (cap.captured) toast(`Payment of ${fc(cap.captured)} released to contractor 💰`);
+    } catch(payErr) {
+      // No payment or already captured — still mark complete
+      await api('PATCH', '/jobs/'+jid+'/complete');
+    }
+    const j = S.jobs.find(x => x.id===jid);
+    if (j) { j.st='completed'; j.dn=Date.now(); }
+    toast('Job marked complete!'); opnRv(jid); rPg();
+  } catch(err) { toast(err.message || 'Failed to update', 'er'); }
+}
+function opnRv(jid){
+  const job=S.jobs.find(j=>j.id===jid),b=job.ac?S.bids[job.ac]:null,c=b?S.cons[b.ci]:null;
+  window._rr=5;
+  oMdl(`<div class="mhdr"><div class="mtit">Leave a Review</div><button class="mcls" onclick="cMdl()">✕</button></div>
+  ${c?`<div class="frow g10 mb14" style="gap:10px"><div class="av avm" style="background:${c.bg};color:${c.fg}">${c.ini}</div><div><div class="f7">${c.nm}</div><div class="t2" style="font-size:13px">${job.ti}</div></div></div>`:''}
+  <div class="fg"><label class="fl">Rating</label><div id="rsr" style="display:flex;gap:4px;font-size:28px;cursor:pointer">${[1,2,3,4,5].map(i=>`<span class="son" onclick="setRR(${i})" onmouseover="hvRR(${i})" onmouseout="rstRR()">★</span>`).join('')}</div></div>
+  <div class="fg"><label class="fl">Review</label><textarea class="fc_" id="rtxt" placeholder="Share your experience…"></textarea></div>
+  <button class="btn btp bful" onclick="subRv('${jid}')">Submit Review</button>`);
+}
+function setRR(v){window._rr=v;updRS(v)}
+function hvRR(v){updRS(v)}
+function rstRR(){updRS(window._rr||5)}
+function updRS(v){document.querySelectorAll('#rsr span').forEach((s,i)=>{s.style.color=i<v?'var(--amber2)':'rgba(255,255,255,.1)'})}
+async function subRv(jid) {
+  const job = S.jobs.find(j => j.id===jid); if (!job) return;
+  const acceptedBid = job.ac ? S.bids[job.ac] : null;
+  const revieweeId = S.role==='homeowner' ? acceptedBid?.ci : job.own;
+  if (!revieweeId) { cMdl(); toast('Review submitted! ⭐'); return; }
+  try {
+    const rev = await api('POST', '/reviews', {
+      jobId:jid, revieweeId, rating:window._rr||5,
+      text:document.getElementById('rtxt')?.value||''
+    });
+    S.revs.unshift({...rev, rt:rev.rating, tx:rev.text, t:rev.created_at});
+    cMdl(); toast('Review submitted! ⭐'); rPg();
+  } catch(err) { toast(err.message || 'Failed to submit review', 'er'); }
+}
+
+/* MESSAGES */
+function pMG(){
+  // Load conversations from API on every open
+  api('GET','/messages').then(convos=>{
+    // Merge API convos into S.msgs structure so UI key format matches
+    convos.forEach(c=>{
+      const key=c.job_id+'::'+c.other_user_id;
+      if(!S.msgs[key])S.msgs[key]=[];
+      S._convos=S._convos||{};
+      S._convos[key]=c;
+    });
+    if(S.page==='messages-home')rPg();
+  }).catch(()=>{});
+  let cvs='';
+  // Show API-loaded convos if available, else fall back to S.msgs keys
+  const convoKeys=S._convos?Object.keys(S._convos):Object.keys(S.msgs);
+  convoKeys.forEach(k=>{
+    const [jid,cid]=k.split('::');
+    const meta=S._convos?.[k];
+    const job=S.jobs.find(j=>j.id===jid)||{id:jid,ti:meta?.job_title||'Job',tr:meta?.job_trade||''};
+    const c={id:cid,nm:meta?.other_user_name||'Contractor',ini:meta?.other_user_ini||'?',bg:'rgba(255,255,255,.1)',fg:'#888'};
+    const msgs=S.msgs[k]||[];const last=msgs[msgs.length-1];
+    cvs+=`<div class="nrow${S.ck===k?' unrd':''}" onclick="S.ck='${k}';rPg()" style="${S.ck===k?'background:rgba(14,116,144,.08);border-left:2px solid var(--amber)':''}">
+      <div class="av avs" style="background:${c.bg};color:${c.fg}">${c.ini}</div>
+      <div style="flex:1;min-width:0"><div class="fjb"><div class="f6" style="font-size:13px">${c.nm}</div><div class="t3" style="font-size:11px">${ago(last.t)}</div></div>
+      <div class="t2" style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px">${last.fr==='h1'?'You: ':''}${last.tx}</div>
+      <div class="t3" style="font-size:11px;margin-top:2px">${job.ti}</div></div>
+    </div>`;
+  });
+  let ca=`<div style="display:flex;align-items:center;justify-content:center;height:200px;color:var(--t3)">Select a conversation</div>`;
+  if(S.ck){
+    const [,cid]=S.ck.split('-'),c=S.cons[cid],msgs=S.msgs[S.ck]||[];
+    ca=`<div style="border:1px solid var(--border);border-radius:14px;overflow:hidden">
+      <div class="frow g10" style="padding:13px 15px;border-bottom:1px solid var(--border);background:rgba(255,255,255,.02)">
+        <div style="width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 6px var(--teal)"></div>
+        <div class="av avs" style="background:${c.bg};color:${c.fg}">${c.ini}</div>
+        <div class="f6" style="font-size:13px">${c.nm}</div>
+      </div>
+      <div class="mlist" id="mlist">${msgs.map(m=>`<div style="display:flex;flex-direction:column;align-items:${(m.sender_id?m.sender_id===S.user?.id:m.fr==='h1')?'flex-end':'flex-start'}">
+        <div class="mbub ${(m.sender_id?m.sender_id===S.user?.id:m.fr==='h1')?'mout':'min'}">${m.text||m.tx}</div>
+        <div style="font-size:11px;color:var(--t3);margin-top:3px;text-align:${(m.sender_id?m.sender_id===S.user?.id:m.fr==='h1')?'right':'left'}">${ago(m.created_at||m.t)}</div>
+      </div>`).join('')}</div>
+      <div class="frow g8" style="padding:11px 13px;border-top:1px solid var(--border)">
+        <input class="fc_" id="chi" placeholder="Type a message…" onkeydown="if(event.key==='Enter')sendM()" style="flex:1">
+        <button class="btn btp bsm" onclick="sendM()">Send</button>
+      </div>
+    </div>`;
+  }
+  return`<div><div class="mb24"><div class="ptit">Messages</div></div>
+  <div class="g2" style="gap:18px;align-items:start">
+    <div class="card" style="padding:0;overflow:hidden">${cvs||`<div class="emp" style="padding:28px"><span class="eico">💬</span><div class="etit">No messages yet</div><div class="etxt">Messages appear here when you start a conversation on a job.</div></div>`}</div>
+    <div>${ca}</div>
+  </div></div>`;
+}
+async function openChat(jid, otherId) {
+  const key = jid + '::' + otherId;
+  S.ck = key;
+  if (!S.msgs[key]) {
+    try {
+      const msgs = await api('GET', '/messages/'+jid+'/'+otherId);
+      S.msgs[key] = msgs;
+    } catch { S.msgs[key] = []; }
+  }
+  go('messages-home');
+}
+async function sendM() {
+  const inp = document.getElementById('chi');
+  const tx = inp?.value.trim(); if (!tx) return;
+  const [jobId, otherId] = S.ck.split('::');
+  if (!S.msgs[S.ck]) S.msgs[S.ck] = [];
+  const tmp = {id:'tmp'+Date.now(), sender_id:S.user?.id, text:tx, created_at:Date.now(),
+    sender_name:S.user?.name, sender_ini:S.user?.ini};
+  S.msgs[S.ck].push(tmp); inp.value=''; rPg();
+  try {
+    const msg = await api('POST', '/messages', {jobId, receiverId:otherId, text:tx});
+    const idx = S.msgs[S.ck].findIndex(m => m.id===tmp.id);
+    if (idx>=0) S.msgs[S.ck][idx] = msg;
+    rPg();
+  } catch(err) {
+    toast(err.message || 'Send failed', 'er');
+    S.msgs[S.ck] = S.msgs[S.ck].filter(m => m.id!==tmp.id);
+    rPg();
+  }
+}
+
+/* NOTIFICATIONS */
+function pNT(){
+  loadNotifications().then(()=>{if(S.page==='notifications')rPg();}).catch(()=>{});
+  S.notifs.forEach(n=>n.rd=true);document.getElementById('npip').style.display='none';api('PATCH','/notifications/read-all').catch(()=>{});
+  if(!S.notifs.length)return`<div class="emp"><span class="eico">🔔</span><div class="etit">All caught up</div></div>`;
+  const ico={bid:'📋',post:'🚀',accept:'✅',complete:'🏁'};
+  return`<div><div class="fjb mb24"><div class="ptit">Notifications</div><button class="btn btg bsm" onclick="api('DELETE','/notifications').then(()=>{S.notifs=[];rPg()}).catch(()=>{})">Clear all</button></div>
+  <div class="card" style="padding:0;overflow:hidden">
+    ${S.notifs.map(n=>`<div class="nrow"><div class="nico2" style="background:var(--adim)">${ico[n.ty]||'🔔'}</div>
+    <div style="flex:1"><div class="f6" style="font-size:13px">${n.ti}</div><div class="t2" style="font-size:13px;margin-top:3px">${n.bo}</div><div class="t3" style="font-size:11px;margin-top:3px">${ago(n.t)}</div></div>
+    ${n.lk?`<button class="btn btg bxs" onclick="go('${n.lk}')">View →</button>`:''}
+    </div>`).join('')}
+  </div></div>`;
+}
+
+/* ACCOUNT */
+function pAC(){
+  const u=S.user||{};
+  const nm=u.name||u.nm||(S.role==='homeowner'?'Homeowner':'Tradesman');
+  const em=u.email||u.em||'';
+  const ph=u.phone||u.ph||'';
+  const ad=u.address||u.ad||'';
+  const ini=nm.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase()||'U';
+  return`<div><div class="mb24"><div class="ptit">Account</div></div>
+  <div class="card mb12"><div class="frow g14 mb18" style="gap:14px">
+    <div class="av avl" style="background:var(--adim);color:var(--amber)">${ini}</div>
+    <div><div class="f8" style="font-size:17px">${nm}</div><div class="t2" style="font-size:13px;margin-top:3px">${em}</div><span class="bdg bt mt8">✓ Verified</span></div>
+  </div><div class="dv"></div>
+  <div class="fg"><label class="fl">Full name</label><input class="fc_" id="ac-nm" value="${nm}"></div>
+  <div class="fg"><label class="fl">Email</label><input class="fc_" id="ac-em" type="email" value="${em}"></div>
+  <div class="fg"><label class="fl">Phone</label><input class="fc_" id="ac-ph" type="tel" value="${ph}"></div>
+  <div class="fg" style="margin:0"><label class="fl">Address</label><input class="fc_" id="ac-ad" value="${ad}"></div>
+  </div>
+  <div class="frow g10 mb12">
+    <button class="btn btp" onclick="saveAccount()">Save Changes</button>
+    <button class="btn btd" onclick="doLogout()" style="margin-left:auto">Sign Out</button>
+  </div></div>`;
+}
+async function saveAccount() {
+  try {
+    const result = await api('PATCH', '/auth/profile', {
+      name:    document.getElementById('ac-nm')?.value,
+      phone:   document.getElementById('ac-ph')?.value,
+      address: document.getElementById('ac-ad')?.value,
+    });
+    S.user = result.user; S.profile = result.user.profile||null;
+    updateHdrUser(); toast('Changes saved! ✨'); rPg();
+  } catch(err) { toast(err.message || 'Save failed', 'er'); }
+}
+
+/* BROWSE JOBS — MAP */
+function pBR(){
+  // Load fresh jobs — but only re-render the page if the map isn't already live.
+  // If the map is already rendered, just refresh markers in-place to avoid flicker.
+  if(!window._leafMap){
+    loadJobs().then(()=>{if(S.page==='browse-jobs')rPg();}).catch(()=>{});
+  } else {
+    loadJobs().then(()=>{
+      if(S.page==='browse-jobs'){
+        // Refresh markers without tearing down the map
+        const openJobs=S.jobs.filter(j=>j.st==='bidding');
+        const filtJobs=openJobs.filter(j=>(S.tf==='all'||j.tr===S.tf)&&(!S.sq||j.ti.toLowerCase().includes(S.sq.toLowerCase())||j.de.toLowerCase().includes(S.sq.toLowerCase())));
+        renderJobMarkers(window._leafMap, filtJobs, USER_LOC.lat, USER_LOC.lng);
+      }
+    }).catch(()=>{});
+  }
+  const open=S.jobs.filter(j=>j.st==='bidding');
+  const filt=open.filter(j=>(S.tf==='all'||j.tr===S.tf)&&(!S.sq||j.ti.toLowerCase().includes(S.sq.toLowerCase())||j.de.toLowerCase().includes(S.sq.toLowerCase())));
+  if(S.bv!=='map')return pBRlist(filt,open);
+
+  // Schedule Leaflet map init after render
+  // Show spinner then async-init real map
+  if(window._leafMap){
+    // Map already alive — just refresh markers, no rebuild needed
+    renderJobMarkers(window._leafMap, filt, USER_LOC.lat, USER_LOC.lng);
+    // Recenter on selected job if one is active
+    if(S.jv&&JXY[S.jv]) window._leafMap.setView([JXY[S.jv].lat,JXY[S.jv].lng],15,{animate:true});
+  } else {
+    setTimeout(()=>{
+      initLeafletMap(filt).then(()=>{
+        // Reverse geocode for city name — only once
+        if(USER_LOC.lat&&!window._lastCity){
+          fetch('https://nominatim.openstreetmap.org/reverse?lat='+USER_LOC.lat+'&lon='+USER_LOC.lng+'&format=json',
+            {headers:{'Accept-Language':'en','User-Agent':'TradHub/1.0'}})
+            .then(r=>r.json()).then(d=>{
+              const city=d.address?.city||d.address?.town||d.address?.village||d.address?.county||'your area';
+              window._lastCity=city;
+              const el=document.getElementById('loc-sub');
+              if(el)el.textContent='Jobs near '+city;
+            }).catch(()=>{});
+        }
+      });
+    },80);
+  }
+
+  const selJob=S.jv?S.jobs.find(j=>j.id===S.jv):null,selT=selJob?gt(selJob.tr):null;
+  const alrBid=selJob?S.myBids.some(bid=>S.bids[bid]&&S.bids[bid].ji===selJob.id):false;
+  const dtl=selJob?`<div style="padding:15px 18px;border-top:1px solid var(--border);background:rgba(7,8,13,.95)">
+    <div class="fjb mb10">
+      <div class="frow g10">
+        <div class="ti" style="background:${selT.bg};width:36px;height:36px;font-size:17px">${selT.ic}</div>
+        <div><div class="f7" style="font-size:14px">${selJob.ti}</div><div class="t2" style="font-size:12px;margin-top:2px">${selJob.ci} · ${ago(selJob.at)}</div></div>
+      </div>
+      <div class="frow g8">
+        <div class="ptag" style="font-size:14px">${fc(selJob.b0)}–${selJob.b1>=9999?'$1k+':fc(selJob.b1)}</div>
+        <button class="btn btg bxs" onclick="S.jv=null;rPg()">✕</button>
+      </div>
+    </div>
+    <p class="mb10" style="font-size:13px;color:var(--t2);line-height:1.5">${selJob.de}</p>
+    <div class="frow g6 mb12 fwrap">
+      ${selJob.ur==='within48'?'<span class="bdg bc">🔴 Urgent</span>':''}
+      <span class="bdg bgr">${UL[selJob.ur]}</span><span class="bdg bb">${selT.lb}</span>
+      <span class="bdg bgr">${selJob.bids.length} bid${selJob.bids.length!==1?'s':''}</span>
+    </div>
+    ${alrBid?'<div class="bdg bt wf" style="justify-content:center;padding:8px;font-size:13px">✓ Bid already submitted</div>'
+    :`<div style="background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:13px">
+      <div class="f6 mb10" style="font-size:13px">Submit Your Bid</div>
+      <div class="g2 mb10" style="gap:8px">
+        <div><label class="fl">Price ($)</label>
+          <input class="fc_" id="bp-${selJob.id}" type="number" placeholder="250"
+            oninput="checkBidPrice(this.value,'cw-${selJob.id}')">
+          <div id="cw-${selJob.id}" style="display:none;font-size:11px;color:#0E7490;margin-top:4px;font-weight:600"></div>
+        </div>
+        <div><label class="fl">Available</label><select class="fc_" id="ba-${selJob.id}"><option value="today">Today</option><option value="tomorrow">Tomorrow</option><option value="thisweek">This week</option></select></div>
+      </div>
+      <div class="fg mb10"><label class="fl">Message</label><textarea class="fc_" style="min-height:52px" id="bm-${selJob.id}" placeholder="Your approach…"></textarea></div>
+      <button class="btn btp bful" onclick="subBid('${selJob.id}')">Submit Bid →</button>
+    </div>`}
+  </div>`:`<div style="padding:9px 18px;border-top:1px solid var(--border);background:rgba(7,8,13,.9);text-align:center"><div class="t3" style="font-size:12px">Tap a pin to view job details and submit a bid</div></div>`;
+
+  const leg=[...new Set(open.map(j=>j.tr))].map(tid=>{const t=gt(tid);return`<div class="frow g6"><div style="width:8px;height:8px;border-radius:50%;background:${t.mc}"></div><span class="t2" style="font-size:11px">${t.lb}</span></div>`;}).join('');
+
+  const listItems=filt.map(job=>{
+    const t=gt(job.tr),isSel=S.jv===job.id,alb=S.myBids.some(bid=>S.bids[bid]&&S.bids[bid].ji===job.id);
+    return`<div onclick="selPin('${job.id}')" style="padding:11px 14px;border-bottom:1px solid var(--border);cursor:pointer;background:${isSel?'rgba(14,116,144,.08)':'transparent'};${isSel?'border-left:2px solid var(--amber)':''};transition:background .15s"
+      onmouseover="if(!this.style.background.includes('245'))this.style.background='rgba(255,255,255,.04)'"
+      onmouseout="this.style.background='${isSel?'rgba(14,116,144,.08)':'transparent'}'">
+      <div class="frow g8 mb5">
+        <div style="width:32px;height:32px;border-radius:7px;background:${t.bg};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">${t.ic}</div>
+        <div style="flex:1;min-width:0">
+          <div class="f6" style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${job.ti}</div>
+          <div class="t2" style="font-size:11px;margin-top:2px">${fmtDist(job.id)?'📍'+fmtDist(job.id)+' · ':''}${job.ci?job.ci+' · ':''}${ago(job.at)}</div>
+        </div>
+      </div>
+      <div class="frow g5 fwrap" style="gap:5px">
+        <span class="ptag" style="font-size:12px">${fc(job.b0)}–${job.b1>=999999?'$100k+':job.b1>=9999?fc(job.b0)+'–'+fc(job.b1):fc(job.b1)}</span>
+        ${job.ur==='within48'?'<span class="bdg bc" style="padding:1px 6px;font-size:10px">Urgent</span>':''}
+        ${alb?'<span class="bdg bt" style="padding:1px 6px;font-size:10px">✓ Bid sent</span>':''}
+      </div>
+    </div>`;
+  }).join('');
+
+  const toggleBtns=`<div style="display:flex;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:999px;padding:2px;gap:2px">
+    <button onclick="S.bv='map';rPg()" style="padding:4px 13px;border-radius:999px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:${S.bv!=='list'?'var(--amber)':'transparent'};color:${S.bv!=='list'?'#000':'var(--t2)'}">🗺 Map</button>
+    <button onclick="S.bv='list';rPg()" style="padding:4px 13px;border-radius:999px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:${S.bv==='list'?'var(--amber)':'transparent'};color:${S.bv==='list'?'#000':'var(--t2)'}">☰ List</button>
+  </div>`;
+
+  return`<div style="display:flex;flex-direction:column;height:100%;overflow:hidden">
+    <div class="maptop">
+      <div style="font-family:var(--fd);font-size:16px;font-weight:700;flex-shrink:0">Jobs Map<span class="t3" style="font-size:12px;font-weight:500;margin-left:8px">${filt.length} open</span></div>
+      ${toggleBtns}
+      <div class="sbar" style="margin:0;flex:1;max-width:240px">
+        <span style="font-size:13px;color:var(--t3)">🔍</span>
+        <input placeholder="Search…" value="${S.sq}" oninput="S.sq=this.value;rPg()">
+      </div>
+      <div class="frow g5 fwrap">
+        <button class="btn bxs${S.tf==='all'?' btp':' btg'}" onclick="S.tf='all';rPg()">All</button>
+        ${TRADES.map(t=>`<button class="btn bxs${S.tf===t.id?' btp':' btg'}" title="${t.lb}" onclick="S.tf='${t.id}';rPg()">${t.ic}</button>`).join('')}
+      </div>
+      <span class="bdg ba">${filt.length} job${filt.length!==1?'s':''}</span>
+    </div>
+    <div style="flex:1;display:flex;overflow:hidden;min-height:0">
+      <div class="mapsb">
+        <div style="padding:9px 13px;border-bottom:1px solid var(--border)">
+          <div class="t2" style="font-size:10px;font-weight:700;letter-spacing:.08em">${filt.length} OPEN JOB${filt.length!==1?'S':''} ${window._lastCity?'NEAR '+window._lastCity.toUpperCase():'NEAR YOU'}</div>
+        </div>
+        ${listItems||`<div class="emp" style="padding:28px 16px"><span class="eico">🔍</span><div class="etit">No matches</div></div>`}
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+        <div class="mapsvgwrap" style="flex:1">
+          <div id="leaflet-map"></div>
+          <div class="mapleg">
+            <div class="t2" style="font-size:10px;font-weight:700;letter-spacing:.08em;margin-bottom:7px">TRADE TYPES</div>
+            <div style="display:flex;flex-direction:column;gap:4px">${leg}</div>
+            <div class="dv" style="margin:7px 0"></div>
+            <div class="frow g5"><div style="width:8px;height:8px;border-radius:50%;background:#0E7490"></div><span class="t2" style="font-size:11px">Your location</span></div>
+            <div class="frow g5 mt8"><div style="width:8px;height:8px;border-radius:50%;background:#10B981"></div><span class="t2" style="font-size:11px">Bid submitted</span></div>
+            <div class="frow g5 mt4"><div style="width:8px;height:8px;border-radius:50%;background:#F43F5E"></div><span class="t2" style="font-size:11px">Urgent</span></div>
+          </div>
+        </div>
+        ${dtl}
+      </div>
+    </div>
+  </div>`;
+}
+function selPin(id){
+  S.jv = S.jv===id ? null : id;
+  // Pan map without re-rendering the whole page
+  if(S.jv&&window._leafMap){
+    const c=JXY[id];
+    if(c) window._leafMap.setView([c.lat,c.lng],15,{animate:true});
+  }
+  // Only re-render the detail panel and sidebar list, not the whole map
+  const dtlEl=document.getElementById('map-detail');
+  if(dtlEl){
+    // Rebuild just the detail section
+    rPg();
+  } else {
+    rPg();
+  }
+}
+
+let _leafMarkers={};
+
+// Render job markers onto an existing Leaflet map instance
+function renderJobMarkers(map, filtJobs, userLat, userLng){
+  // Clear old markers
+  Object.values(_leafMarkers).forEach(m=>m.remove());
+  _leafMarkers={};
+
+  const open=S.jobs.filter(j=>j.st==='bidding');
+  const bounds=userLat?[[userLat,userLng]]:[];
+
+  open.forEach(job=>{
+    const coord=JXY[job.id];
+    if(!coord)return;
+    bounds.push([coord.lat,coord.lng]);
+    const t=gt(job.tr);
+    const isFilt=filtJobs.some(fj=>fj.id===job.id);
+    const isDim=!isFilt;
+    const isUrg=job.ur==='within48';
+    const alb=S.myBids.some(bid=>S.bids[bid]&&S.bids[bid].ji===job.id);
+    const isSel=S.jv===job.id;
+    const badgeDot=alb?`<div style="position:absolute;top:-4px;right:-4px;width:12px;height:12px;border-radius:50%;background:#10B981;border:2px solid #07080D;display:flex;align-items:center;justify-content:center;font-size:7px;color:white">✓</div>`
+      :isUrg?`<div style="position:absolute;top:-4px;right:-4px;width:12px;height:12px;border-radius:50%;background:#F43F5E;border:2px solid #07080D;display:flex;align-items:center;justify-content:center;font-size:8px;color:white;font-weight:700">!</div>`:'';
+    const sz=isSel?46:34;
+    const op=isDim?0.25:1;
+    const ring=isSel?`box-shadow:0 0 0 4px ${t.mc}40,0 3px 12px rgba(0,0,0,.7);`:isUrg&&!alb&&!isDim?`box-shadow:0 0 0 8px ${t.mc}18,0 3px 12px rgba(0,0,0,.6);`:`box-shadow:0 3px 10px rgba(0,0,0,.6);`;
+    const markerHtml=`<div style="position:relative;width:${sz}px;height:${sz}px;opacity:${op}">
+      <div style="width:${sz}px;height:${sz}px;border-radius:50%;background:${t.mc};border:${isSel?3:2}px solid rgba(255,255,255,${isSel?.95:.65});${ring}display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:${isSel?22:16}px;transition:all .2s">
+        ${t.ic}
+      </div>
+      ${badgeDot}
+    </div>`;
+    const icon=L.divIcon({className:'',html:markerHtml,iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]});
+    const marker=L.marker([coord.lat,coord.lng],{icon,zIndexOffset:isSel?900:isDim?0:500});
+    marker.addTo(map);
+    marker.on('click',()=>{selPin(job.id);});
+    _leafMarkers[job.id]=marker;
+  });
+
+  return bounds;
+}
+
+async function initLeafletMap(filtJobs){
+  const mapEl=document.getElementById('leaflet-map');
+  if(!mapEl)return;
+
+  // Show loading indicator
+  mapEl.innerHTML='<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(7,8,13,.7);z-index:999;font-size:13px;color:var(--t2);gap:8px"><span style="animation:spin 1s linear infinite;display:inline-block">⟳</span> Loading map…</div>';
+
+  // Destroy existing map instance
+  if(window._leafMap){window._leafMap.remove();window._leafMap=null;_leafMarkers={};}
+
+  // Get user location + geocode job addresses in parallel
+  await Promise.all([getUserLocation(), geocodeAllJobs()]);
+
+  // Clear loading overlay
+  mapEl.innerHTML='';
+
+  const map=L.map('leaflet-map',{zoomControl:true,attributionControl:false});
+  window._leafMap=map;
+
+  // Dark tile layer (CartoDB Dark Matter)
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    subdomains:'abcd',maxZoom:19
+  }).addTo(map);
+
+  // User location pin
+  const userLat=USER_LOC.lat, userLng=USER_LOC.lng;
+  if(userLat){
+    const userIcon=L.divIcon({className:'',html:`<div style="width:22px;height:22px;border-radius:50%;background:#0E7490;border:3px solid rgba(7,8,13,.95);box-shadow:0 0 0 6px rgba(14,116,144,.25),0 2px 8px rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center"><div style="width:6px;height:6px;border-radius:50%;background:white"></div></div>`,iconSize:[22,22],iconAnchor:[11,11]});
+    L.marker([userLat,userLng],{icon:userIcon,zIndexOffset:1000}).addTo(map).bindPopup('<b>Your Location</b>');
+  }
+
+  const bounds=renderJobMarkers(map, filtJobs, userLat, userLng);
+
+  // Fit map to all markers
+  if(bounds.length>1){
+    map.fitBounds(bounds,{padding:[40,40],maxZoom:15});
+  } else if(userLat){
+    map.setView([userLat,userLng],13);
+  } else {
+    map.setView([51.505,0],10); // fallback: London center
+  }
+
+  // If a job is selected, center on it
+  if(S.jv&&JXY[S.jv]){
+    map.setView([JXY[S.jv].lat,JXY[S.jv].lng],15,{animate:false});
+  }
+}
+
+function pBRlist(filt,open){
+  return`<div><div class="fjb mb24"><div><div class="ptit">Browse Jobs</div><div class="psub" id="loc-sub">${USER_LOC.lat&&window._lastCity?"Jobs near "+window._lastCity:"Jobs near you"}</div></div>
+  <div style="display:flex;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:999px;padding:2px;gap:2px">
+    <button onclick="S.bv='map';rPg()" style="padding:4px 13px;border-radius:999px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:transparent;color:var(--t2)">🗺 Map</button>
+    <button style="padding:4px 13px;border-radius:999px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:var(--amber);color:#000">☰ List</button>
+  </div></div>
+  <div class="mgrid">
+    <div class="mc ma"><span class="mico">📍</span><div class="mval">${filt.length}</div><div class="mlbl">Jobs near you</div></div>
+    <div class="mc mt"><span class="mico">💰</span><div class="mval">${(()=>{const bids=open.flatMap(j=>j.bids.map(id=>S.bids[id])).filter(Boolean);return bids.length?fc(Math.round(bids.reduce((s,b)=>s+b.pr,0)/bids.length)):'—';})()}</div><div class="mlbl">Avg bid</div></div>
+    <div class="mc mb"><span class="mico">📋</span><div class="mval">${open.reduce((s,j)=>s+j.bids.length,0)}</div><div class="mlbl">Total bids</div></div>
+    <div class="mc mv"><span class="mico">⚡</span><div class="mval">${open.filter(j=>j.ur==='within48').length}</div><div class="mlbl">Urgent</div></div>
+  </div>
+  <div class="sbar"><span style="font-size:13px;color:var(--t3)">🔍</span><input placeholder="Search jobs…" value="${S.sq}" oninput="S.sq=this.value;rPg()"></div>
+  <div class="fjb mb10">
+    <div class="frow g5 fwrap">
+      <button class="btn bxs${S.tf==='all'?' btp':' btg'}" onclick="S.tf='all';rPg()">All trades</button>
+      ${TRADES.map(t=>`<button class="btn bxs${S.tf===t.id?' btp':' btg'}" onclick="S.tf='${t.id}';rPg()">${t.ic} ${t.lb}</button>`).join('')}
+    </div>
+    <select class="fc_" style="width:auto;padding:5px 10px;font-size:12px;min-width:110px" onchange="S.sortBy=this.value;rPg()">
+      <option value="recent" ${S.sortBy==='recent'||!S.sortBy?'selected':''}>⏱ Recent</option>
+      <option value="distance" ${S.sortBy==='distance'?'selected':''}>📍 Nearest</option>
+      <option value="budget" ${S.sortBy==='budget'?'selected':''}>💰 Budget</option>
+      <option value="urgent" ${S.sortBy==='urgent'?'selected':''}>🔴 Urgent first</option>
+    </select>
+  </div>
+  ${(()=>{
+    let sorted=[...filt];
+    if(S.sortBy==='distance') sorted.sort((a,b)=>(jobDist(a.id)||999)-(jobDist(b.id)||999));
+    else if(S.sortBy==='budget') sorted.sort((a,b)=>b.b1-a.b1);
+    else if(S.sortBy==='urgent') sorted.sort((a,b)=>(a.ur==='within48'?0:1)-(b.ur==='within48'?0:1));
+    else sorted.sort((a,b)=>b.at-a.at);
+    return sorted;
+  })().map(job=>{
+    const t=gt(job.tr),isSel=S.jv===job.id,alb=S.myBids.some(bid=>S.bids[bid]&&S.bids[bid].ji===job.id);
+    return`<div class="jc${isSel?' sel':''}${job.ur==='within48'?' urg':''}" onclick="S.jv=S.jv==='${job.id}'?null:'${job.id}';rPg()">
+      <div class="fjb mb7"><div class="frow g10"><div class="ti" style="background:${t.bg}">${t.ic}</div>
+      <div><div class="f6">${job.ti}</div><div class="t2" style="font-size:12px;margin-top:3px">${job.ci?job.ci+' · ':''}${fmtDist(job.id)?'📍'+fmtDist(job.id)+' · ':''}${ago(job.at)}</div></div></div>
+      <div class="tright"><div class="ptag">${fc(job.b0)}–${job.b1>=999999?'$100k+':job.b1>=9999?fc(job.b0)+'–'+fc(job.b1):fc(job.b1)}</div><div class="t2" style="font-size:11px;margin-top:3px">${job.bids.length} bids</div></div></div>
+      <p style="font-size:13px;color:var(--t2);margin-bottom:9px">${job.de.substring(0,110)}${job.de.length>110?'…':''}</p>
+      <div class="frow g5 fwrap">
+        ${job.ur==='within48'?'<span class="bdg bc">🔴 Urgent</span>':''}
+        <span class="bdg bgr">${UL[job.ur]}</span><span class="bdg bb">${t.lb}</span>
+        ${job.b0>=500?'<span class="bdg" style="background:rgba(14,116,144,.15);color:#0E7490;font-size:10px;border:1px solid rgba(14,116,144,.3)">🔐 Credentials req.</span>':''}
+      </div>
+      ${isSel?`<div style="background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:11px;padding:14px;margin-top:10px" onclick="event.stopPropagation()">
+        <div class="f6 mb10">Submit Your Bid</div>
+        ${alb?'<div class="bdg bt wf" style="justify-content:center;padding:8px">✓ Bid already submitted</div>':`
+        <div class="g2 mb10" style="gap:8px">
+          <div><label class="fl">Price ($)</label>
+          <input class="fc_" id="bp-${job.id}" type="number" placeholder="250"
+            oninput="checkBidPrice(this.value,'cw-${job.id}')">
+          <div id="cw-${job.id}" style="display:none;font-size:11px;color:#0E7490;margin-top:4px;font-weight:600"></div>
+        </div>
+          <div><label class="fl">Available</label><select class="fc_" id="ba-${job.id}"><option value="today">Today</option><option value="tomorrow">Tomorrow</option><option value="thisweek">This week</option></select></div>
+        </div>
+        <div class="fg mb10"><label class="fl">Message</label><textarea class="fc_" id="bm-${job.id}" placeholder="Your experience and approach…"></textarea></div>
+        <div class="frow g8"><button class="btn btp" style="flex:1" onclick="subBid('${job.id}')">Submit Bid →</button><button class="btn btg" onclick="S.jv=null;rPg()">Cancel</button></div>`}
+      </div>`:''}
+    </div>`;
+  }).join('')||`<div class="emp"><span class="eico">🔍</span><div class="etit">No jobs found</div></div>`}
+  </div>`;
+}
+function credentialsMissing(price){
+  // Returns an array of missing credential labels for bids >= $500
+  if(price < 500) return [];
+  const u = S.user;
+  const missing = [];
+  if(!u?.license || u.license.trim()==='') missing.push({key:'license', label:'License number', icon:'📋'});
+  if(!u?.insured)  missing.push({key:'insured',  label:'Proof of insurance', icon:'🛡️'});
+  if(!u?.bonded)   missing.push({key:'bonded',   label:'Surety bond',        icon:'🔒'});
+  return missing;
+}
+
+function showCredentialBlocker(price, missingList, jobId){
+  const itemsHtml = missingList.map(m =>
+    `<div style="display:flex;align-items:center;gap:10px;padding:11px 14px;background:rgba(244,63,94,.07);border:1px solid rgba(244,63,94,.25);border-radius:10px;margin-bottom:8px">
+      <span style="font-size:18px">${m.icon}</span>
+      <div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--t1)">${m.label}</div>
+      <div style="font-size:12px;color:var(--t3);margin-top:2px">Required for bids over $500</div></div>
+      <span style="font-size:16px;color:#F43F5E">✗</span>
+    </div>`
+  ).join('');
+
+  oMdl(`<div class="mhdr">
+    <div class="mtit">Credentials Required</div>
+    <button class="mcls" onclick="cMdl()">✕</button>
+  </div>
+  <div style="text-align:center;padding:8px 0 16px">
+    <div style="font-size:32px;margin-bottom:8px">🔐</div>
+    <div style="font-size:15px;font-weight:700;color:var(--t1);margin-bottom:6px">This job requires verified credentials</div>
+    <div style="font-size:13px;color:var(--t2);line-height:1.6">Jobs valued <strong style="color:var(--amber)">$500 or more</strong> require contractors to have a license number, insurance, and a surety bond on file before bidding.</div>
+  </div>
+  <div style="margin-bottom:16px">${itemsHtml}</div>
+  <div style="background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:16px">
+    <div style="font-size:12px;font-weight:700;color:var(--t3);letter-spacing:.05em;margin-bottom:8px">YOUR CREDENTIALS STATUS</div>
+    ${[
+      {label:'License number', ok:!!(S.profile?.license?.trim()), icon:'📋'},
+      {label:'Insurance',      ok:!!(S.profile?.insured),          icon:'🛡️'},
+      {label:'Surety bond',    ok:!!(S.profile?.bonded),           icon:'🔒'},
+    ].map(item=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <span style="font-size:14px">${item.icon}</span>
+      <span style="font-size:13px;flex:1;color:var(--t2)">${item.label}</span>
+      <span style="font-size:14px;font-weight:700;color:${item.ok?'#10B981':'#F43F5E'}">${item.ok?'✓ Verified':'✗ Missing'}</span>
+    </div>`).join('')}
+  </div>
+  <button class="btn btp bful" style="padding:12px;font-size:14px;margin-bottom:8px" onclick="cMdl();go('my-profile')">
+    Complete My Profile →
+  </button>
+  <button class="btn btg bful" style="padding:10px;font-size:13px" onclick="cMdl()">Cancel</button>`);
+}
+
+async function subBid(jobId){
+  const p=document.getElementById(`bp-${jobId}`),a=document.getElementById(`ba-${jobId}`),m=document.getElementById(`bm-${jobId}`);
+  const price=parseFloat(p?.value);if(!price||price<1){toast('Enter a valid price','er');return}
+
+  // Credential gate for $500+ bids
+  const missing = credentialsMissing(price);
+  if(missing.length > 0){
+    showCredentialBlocker(price, missing, jobId);
+    return;
+  }
+
+  try {
+    const bid = await api('POST', '/bids', {
+      jobId, price, availability:a?.value||'today', message:m?.value||''
+    });
+    const nb = normalizeBid(bid);
+    S.bids[nb.id] = nb;
+    const j = S.jobs.find(j=>j.id===jobId);
+    if (j && !j.bids.includes(nb.id)) j.bids.push(nb.id);
+    if (!S.myBids.includes(nb.id)) S.myBids.push(nb.id);
+    S.jv=null; toast('Bid submitted! 🎉'); rPg();
+  } catch(err) {
+    if (err.data?.missing) showCredentialBlocker(price, err.data.missing.map(l=>({label:l,icon:'📋'})), jobId);
+    else toast(err.message||'Failed to submit bid','er');
+  }
+}
+
+/* MY BIDS */
+function pMB(){
+  loadMyBids().then(()=>{if(S.page==='my-bids')rPg();}).catch(()=>{});
+  const mb=S.myBids.map(id=>S.bids[id]).filter(Boolean);
+  const pend=mb.filter(b=>b.st==='pending'),acc=mb.filter(b=>b.st==='accepted'),rej=mb.filter(b=>b.st==='rejected');
+  const bCard=(b,badge)=>{
+    const job=S.jobs.find(j=>j.id===b.ji);if(!job)return'';
+    const t=gt(job.tr),oth=job.bids.filter(id=>id!==b.id).length;
+    const sc=Math.max(15,Math.min(95,100-(job.bids.indexOf(b.id))*12));
+    return`<div class="jc"><div class="fjb mb7"><div class="frow g10"><div class="ti" style="background:${t.bg}">${t.ic}</div>
+      <div><div class="f6">${job.ti}</div><div class="t2" style="font-size:12px;margin-top:3px">${ago(b.at)}</div></div></div>
+      <div class="tright"><div class="ptag" style="font-size:14px">${fc(b.pr)}</div>${badge}</div></div>
+      <p style="font-size:13px;color:var(--t2);font-style:italic;margin-bottom:8px">"${b.ms.substring(0,85)}…"</p>
+      ${b.st==='pending'?`<div class="mb7"><div class="fjb mb4"><span class="t2" style="font-size:11px">vs ${oth} other bid${oth!==1?'s':''}</span><span class="ta f6" style="font-size:11px">${sc}%</span></div>
+      <div class="pbar"><div class="pfill" style="width:${sc}%"></div></div></div>`:''}
+      ${b.st==='pending'?`<div class="frow g7" style="gap:7px"><button class="btn btg bsm" onclick="openChat('${job.id}','h1')">💬 Message</button><button class="btn btd bsm" onclick="wdBid('${b.id}')">Withdraw</button></div>`:''}
+    </div>`;
+  };
+  return`<div><div class="mb24"><div class="ptit">My Bids</div></div>
+  <div class="g3 mb20"><div class="mc ma"><span class="mico">⏳</span><div class="mval">${pend.length}</div><div class="mlbl">Pending</div></div>
+  <div class="mc mt"><span class="mico">✅</span><div class="mval">${acc.length}</div><div class="mlbl">Accepted</div></div>
+  <div class="mc mb"><span class="mico">📊</span><div class="mval">${mb.length}</div><div class="mlbl">Total bids</div></div></div>
+  ${pend.length?`<div class="sh">Pending</div>${pend.map(b=>bCard(b,'<span class="bdg ba">Pending</span>')).join('')}`:''}
+  ${acc.length?`<div class="sh">Accepted</div>${acc.map(b=>bCard(b,'<span class="bdg bt">Accepted</span>')).join('')}`:''}
+  ${rej.length?`<div class="sh">Not selected</div>${rej.map(b=>bCard(b,'<span class="bdg bgr">Not selected</span>')).join('')}`:''}
+  ${!mb.length?`<div class="emp"><span class="eico">📤</span><div class="etit">No bids yet</div><button class="btn btp mt16" onclick="go('browse-jobs')">Browse Jobs</button></div>`:''}
+  </div>`;
+}
+function checkBidPrice(val, warnId){
+  const el = document.getElementById(warnId);
+  if(!el) return;
+  const price = parseFloat(val);
+  if(!price || price < 500){ el.style.display='none'; return; }
+  const missing = credentialsMissing(price);
+  if(missing.length === 0){
+    el.style.display = 'block';
+    el.style.color = '#10B981';
+    el.textContent = '✓ Credentials verified for this bid amount';
+  } else {
+    el.style.display = 'block';
+    el.style.color = '#0E7490';
+    el.textContent = '⚠ ' + missing.map(m=>m.label).join(', ') + ' required to submit';
+  }
+}
+
+async function wdBid(bidId) {
+  try {
+    await api('PATCH', '/bids/'+bidId+'/withdraw');
+    S.myBids = S.myBids.filter(id => id !== bidId);
+    if (S.bids[bidId]) S.bids[bidId].st = 'withdrawn';
+    toast('Bid withdrawn'); rPg();
+  } catch(err) { toast(err.message || 'Failed to withdraw', 'er'); }
+}
+
+/* ACTIVE JOBS (TRADESMAN) */
+function pAT(){
+  const mb=S.myBids.map(id=>S.bids[id]).filter(b=>b&&b.st==='accepted');
+  if(!mb.length)return`<div class="emp"><span class="eico">🔧</span><div class="etit">No active jobs</div><button class="btn btp mt16" onclick="go('browse-jobs')">Browse Jobs</button></div>`;
+  return`<div><div class="mb24"><div class="ptit">Active Jobs</div></div>
+  ${mb.map(b=>{const job=S.jobs.find(j=>j.id===b.ji);if(!job)return'';const t=gt(job.tr);
+    return`<div class="card mb12"><div class="fjb mb10">
+      <div class="frow g10"><div class="ti" style="background:${t.bg}">${t.ic}</div>
+      <div><div class="f7" style="font-size:14px">${job.ti}</div><div class="t2" style="font-size:12px;margin-top:3px">${job.ad} · ${job.ci}</div></div></div>
+      <div class="ptag">${fc(b.pr)}</div></div>
+      <div class="tl mb10">
+        <div class="tli"><div class="tld tdon"></div><div style="font-size:13px;font-weight:600">Bid accepted</div><div class="t2" style="font-size:12px;margin-top:1px">${fdt(b.at)}</div></div>
+        <div class="tli"><div class="tld tact"></div><div style="font-size:13px;font-weight:600">Scheduled & en route</div><div class="t2" style="font-size:12px;margin-top:1px">Scheduled · Arriving soon</div></div>
+        <div class="tli"><div class="tld tpnd"></div><div style="font-size:13px;font-weight:600;color:var(--t3)">Mark complete</div></div>
+      </div>
+      <div class="dv"></div>
+      <div class="frow g8"><button class="btn btg bsm" onclick="openChat('${job.id}','h1')">💬 Message</button><button class="btn bts bsm" onclick="conDn('${job.id}')">✓ Mark Complete</button></div>
+    </div>`;
+  }).join('')}</div>`;
+}
+async function conDn(jid) {
+  try {
+    await api('PATCH', '/jobs/'+jid+'/complete');
+    const j = S.jobs.find(x => x.id===jid);
+    if (j) { j.st='completed'; j.dn=Date.now(); }
+    toast('Job complete! Payment processing 💰'); rPg();
+  } catch(err) { toast(err.message || 'Failed to update', 'er'); }
+}
+
+/* EARNINGS */
+function pEA(){
+  // Build rows from real accepted bids on completed jobs
+  const rows=S.myBids.map(id=>S.bids[id]).filter(b=>b&&b.st==='accepted').map(b=>{
+    const job=S.jobs.find(j=>j.id===b.ji);
+    if(!job)return null;
+    const fee=Math.round(b.pr*0.10*100)/100;
+    return{j:job.ti,d:fdt(b.at),g:b.pr,f:fee,st:job.st};
+  }).filter(Boolean);
+  const done=rows.filter(r=>r.st==='completed');
+  const pending=rows.filter(r=>r.st!=='completed');
+  const tot=done.reduce((s,r)=>s+r.g-r.f,0);
+  const wk=done.filter(r=>Date.now()-new Date(r.d).getTime()<7*864e5).reduce((s,r)=>s+r.g-r.f,0);
+  const mo=done.filter(r=>Date.now()-new Date(r.d).getTime()<30*864e5).reduce((s,r)=>s+r.g-r.f,0);
+  const pendTotal=pending.reduce((s,r)=>s+r.g-r.f,0);
+  return`<div><div class="mb24"><div class="ptit">Earnings</div></div>
+  <div class="mgrid">
+    <div class="mc ma"><span class="mico">📅</span><div class="mval">${fc(wk||0)}</div><div class="mlbl">This week</div></div>
+    <div class="mc mt"><span class="mico">📆</span><div class="mval">${fc(mo||0)}</div><div class="mlbl">This month</div></div>
+    <div class="mc mb"><span class="mico">💰</span><div class="mval">${fc(tot||0)}</div><div class="mlbl">Total earned</div></div>
+    <div class="mc mv"><span class="mico">🏦</span><div class="mval">10%</div><div class="mlbl">Platform fee</div></div>
+  </div>
+  ${pending.length?`<div class="card mb12" style="border-color:rgba(14,116,144,.3);background:rgba(14,116,144,.05)">
+    <div class="fjb mb10"><div class="f6">⏳ Pending Payout</div><div class="ptag">${fc(pendTotal)}</div></div>
+    <div class="t2" style="font-size:13px">Jobs in progress — payment releases on completion.</div>
+  </div>`:''}
+  ${done.length?`<div class="card mb12"><div class="f7 mb14">Completed Jobs</div>
+  <table style="width:100%;border-collapse:collapse">
+    <thead><tr style="border-bottom:1px solid var(--border)">
+      <th style="padding:5px 0;font-size:10px;color:var(--t3);font-weight:700;text-align:left;letter-spacing:.06em">JOB</th>
+      <th style="padding:5px 0;font-size:10px;color:var(--t3);font-weight:700;text-align:center;letter-spacing:.06em">DATE</th>
+      <th style="padding:5px 0;font-size:10px;color:var(--t3);font-weight:700;text-align:center;letter-spacing:.06em">FEE</th>
+      <th style="padding:5px 0;font-size:10px;color:var(--t3);font-weight:700;text-align:right;letter-spacing:.06em">NET</th>
+    </tr></thead>
+    <tbody>${done.map(r=>`<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:9px 0;font-size:13px">${r.j}</td>
+      <td style="padding:9px 0;font-size:13px;color:var(--t2);text-align:center">${r.d}</td>
+      <td style="padding:9px 0;font-size:13px;color:var(--t3);text-align:center">–${fc(r.f)}</td>
+      <td style="padding:9px 0;font-size:14px;font-weight:800;color:var(--amber);text-align:right">${fc(r.g-r.f)}</td>
+    </tr>`).join('')}</tbody>
+  </table>
+  <div class="dv"></div>
+  <div class="fjb"><span class="f7">Total net</span><span class="ptag" style="font-size:17px">${fc(tot)}</span></div></div>`:
+  `<div class="emp"><span class="eico">💰</span><div class="etit">No earnings yet</div><div class="etxt">Win bids on jobs to start earning.</div><button class="btn btp mt16" onclick="go('browse-jobs')">Browse Jobs</button></div>`}
+  <div class="card"><div class="fjb mb10"><div class="f6">Payout Method</div><span class="bdg bt">Active</span></div>
+  <div class="t2" style="font-size:13px;margin-bottom:10px">Auto-transfer · Every Friday after job completion</div>
+  <button class="btn btg bsm" onclick="toast('Payout settings coming soon','wn')">Update Details</button></div>
+  </div>`;
+}
+
+/* REVIEWS */
+function pRV(){
+  // Real reviews from S.revs — reviews left by homeowners on completed tradesman jobs
+  const rvs=S.revs.map(r=>{
+    const job=S.jobs.find(j=>j.id===r.ji);
+    if(!job)return null;
+    const b=job.ac?S.bids[job.ac]:null;
+    const owner=S.cons[job.own]||{nm:'Homeowner',ini:'H'};
+    return{n:owner.nm||'Homeowner',r:r.rt,tx:r.tx||'Great work!',j:job.ti,d:fdt(r.t),ini:(owner.nm||'H')[0]};
+  }).filter(Boolean);
+  const avg=rvs.length?(Math.round((rvs.reduce((s,r)=>s+r.r,0)/rvs.length)*10)/10):0;
+  const fiveStar=rvs.length?Math.round((rvs.filter(r=>r.r===5).length/rvs.length)*100):0;
+  return`<div><div class="mb24"><div class="ptit">My Reviews</div></div>
+  <div class="g3 mb20">
+    <div class="mc ma"><span class="mico">⭐</span><div class="mval">${avg||'—'}</div><div class="mlbl">Avg rating</div></div>
+    <div class="mc mt"><span class="mico">💬</span><div class="mval">${rvs.length}</div><div class="mlbl">Reviews</div></div>
+    <div class="mc mb"><span class="mico">🏅</span><div class="mval">${rvs.length?fiveStar+'%':'—'}</div><div class="mlbl">5-star rate</div></div>
+  </div>
+  ${rvs.length?rvs.map(r=>`<div class="card mb10"><div class="fjb mb9">
+    <div class="frow g9" style="gap:9px"><div class="av avs" style="background:var(--adim);color:var(--amber)">${r.ini}</div><div class="f6" style="font-size:13px">${r.n}</div></div>
+    <div class="frow g8"><div style="display:flex;gap:2px;font-size:13px">${strs(r.r)}</div><span class="t3" style="font-size:11px">${r.d}</span></div>
+  </div>
+  <p class="t2" style="font-size:13px;font-style:italic;line-height:1.6">"${r.tx}"</p>
+  <div class="t3" style="font-size:11px;margin-top:7px">Job: ${r.j}</div>
+  </div>`).join(''):`<div class="emp"><span class="eico">⭐</span><div class="etit">No reviews yet</div><div class="etxt">Complete jobs to earn your first review.</div></div>`}
+  </div>`;
+}
+
+/* PROFILE */
+function pPR(){
+  const u=S.user||{};
+  const nm=u.name||u.nm||"My Business";
+  const bio=u.bio||"Licensed & insured professional. All work guaranteed.";
+  const lic=u.license||"";
+  const exp=u.experience||"";
+  const myRvs=S.revs.filter(r=>S.jobs.find(j=>j.id===r.ji&&j.ac&&S.bids[j.ac]?.ci==='c1'));
+  const avgR=myRvs.length?Math.round((myRvs.reduce((s,r)=>s+r.rt,0)/myRvs.length)*10)/10:0;
+  const ini=nm.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase()||'TR';
+  const selectedTrades=u.trades||['plumbing'];
+  const missingCreds=[];
+  if(!u?.license?.trim())missingCreds.push('License number');
+  if(!u?.insured)missingCreds.push('Insurance');
+  if(!u?.bonded)missingCreds.push('Surety bond');
+  const credBanner=missingCreds.length?`<div style="background:rgba(14,116,144,.06);border:1px solid rgba(14,116,144,.22);border-radius:12px;padding:13px 15px;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px">
+    <span style="font-size:20px;flex-shrink:0">⚠️</span>
+    <div>
+      <div style="font-size:13px;font-weight:700;color:var(--amber);margin-bottom:4px">Complete your credentials to bid on $500+ jobs</div>
+      <div style="font-size:12px;color:var(--t2)">Missing: ${missingCreds.join(' · ')}</div>
+    </div>
+  </div>`:'';
+  return`<div><div class="fjb mb24"><div class="ptit">My Profile</div><button class="btn btp" onclick="saveProfile()">Save Changes</button></div>
+  ${credBanner}
+  <div class="card mb12"><div class="frow g14 mb18" style="gap:14px">
+    <div class="av avl" style="background:var(--tdim);color:var(--teal)">${ini}</div>
+    <div><div class="f8" style="font-size:17px">${nm}</div>
+    ${myRvs.length?`<div style="display:flex;gap:2px;font-size:14px;margin-top:5px">${strs(avgR)}<span class="t2" style="font-size:12px;margin-left:7px">${avgR} · ${myRvs.length} review${myRvs.length!==1?'s':''}</span></div>`:'<div class="t2" style="font-size:13px;margin-top:5px">No reviews yet</div>'}
+    <div class="frow g6 mt8">
+      ${lic?'<span class="bdg bt" style="font-size:11px">📋 Licensed</span>':''}
+      ${S.profile?.insured?'<span class="bdg bt" style="font-size:11px">🛡️ Insured</span>':'<span class="bdg bgr" style="font-size:11px">🛡️ Not insured</span>'}
+      ${S.profile?.bonded?'<span class="bdg bt" style="font-size:11px">🔒 Bonded</span>':''}
+    </div></div>
+  </div>
+  <div class="fg"><label class="fl">Business name</label><input class="fc_" id="pr-nm" value="${nm}"></div>
+  <div class="fg"><label class="fl">Bio</label><textarea class="fc_" id="pr-bio">${bio}</textarea></div>
+  <div class="g2"><div class="fg"><label class="fl">License #</label><input class="fc_" id="pr-lic" value="${lic}"></div>
+  <div class="fg"><label class="fl">Years exp</label><input class="fc_" id="pr-exp" type="number" value="${exp}"></div></div>
+  </div>
+  <div class="card mb12"><div class="f7 mb12">Service Settings</div>
+  <div class="g2 mb12"><div class="fg"><label class="fl">Service radius</label><select class="fc_" id="pr-radius"><option>5 miles</option><option ${(S.profile?.radius||'10')==='10'?'selected':''}>10 miles</option><option>15 miles</option><option>25 miles</option><option>50 miles</option></select></div>
+  <div class="fg"><label class="fl">Min job value</label><select class="fc_" id="pr-minjob"><option selected>$50</option><option>$100</option><option>$200</option><option>$500</option><option>$1,000</option></select></div></div>
+  <div class="card mb0" style="background:rgba(14,116,144,.04);border-color:rgba(14,116,144,.16);margin-top:0">
+    <div class="f6 mb12" style="font-size:13px">🛡️ Credentials — Required for jobs over $500</div>
+    <div class="g2">
+      <div class="fg"><label class="fl" style="color:${S.profile?.insured?'#10B981':'var(--t2)'}">Insurance ${S.profile?.insured?'✓':''}</label>
+        <div class="frow g8 mt4">
+          <label class="frow g6" style="cursor:pointer"><input type="radio" name="pr-ins" id="pr-ins-yes" value="yes" ${S.profile?.insured?'checked':''}> <span class="t2" style="font-size:13px">Insured</span></label>
+          <label class="frow g6" style="cursor:pointer"><input type="radio" name="pr-ins" id="pr-ins-no" value="no" ${!S.profile?.insured?'checked':''}> <span class="t2" style="font-size:13px">Not yet</span></label>
+        </div>
+      </div>
+      <div class="fg"><label class="fl" style="color:${S.profile?.bonded?'#10B981':'var(--t2)'}">Bond ${S.profile?.bonded?'✓':''}</label>
+        <div class="frow g8 mt4">
+          <label class="frow g6" style="cursor:pointer"><input type="radio" name="pr-bnd" id="pr-bnd-yes" value="yes" ${S.profile?.bonded?'checked':''}> <span class="t2" style="font-size:13px">Bonded</span></label>
+          <label class="frow g6" style="cursor:pointer"><input type="radio" name="pr-bnd" id="pr-bnd-no" value="no" ${!S.profile?.bonded?'checked':''}> <span class="t2" style="font-size:13px">Not yet</span></label>
+        </div>
+      </div>
+    </div>
+    <div class="fg mt8" style="margin-bottom:0"><label class="fl">License number ${S.profile?.license?'<span class=\"bdg bt\" style=\"padding:1px 7px;font-size:10px\">✓ On file</span>':''}</label>
+      <input class="fc_" id="pr-lic" placeholder="e.g. TX-PLB-48829" value="${lic}">
+    </div>
+  </div>
+  <div class="fg"><label class="fl">Trades offered</label>
+    <div class="frow fwrap" id="pr-trades" style="gap:6px;margin-top:6px">
+      ${TRADES.map(t=>`<div class="ttile${(u&&u.trades||['plumbing']).includes(t.id)?' on':''}" data-id="${t.id}" style="display:flex;align-items:center;gap:7px;padding:7px 12px;flex-direction:row;border-radius:9px" onclick="this.classList.toggle('on')">${t.ic}<span style="font-size:12px;font-weight:600">${t.lb}</span></div>`).join('')}
+    </div>
+  </div>
+  <div class="fg" style="margin:0"><label class="fl">Availability</label>
+    <div class="frow g5 mt6">
+      ${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((d,i)=>`<button class="btn bxs${i<5?' bts':' btg'}" onclick="this.classList.toggle('bts');this.classList.toggle('btg')">${d}</button>`).join('')}
+    </div>
+  </div></div>
+  <div class="card"><div class="f7 mb12">Rates</div>
+  <div class="g2"><div class="fg"><label class="fl">Hourly ($)</label><input class="fc_" type="number" value="${(S.profile?.rate)||''}"></div>
+  <div class="fg"><label class="fl">Day rate ($)</label><input class="fc_" type="number" value="${(S.profile?.day_rate)||''}"></div></div></div>
+  </div>`;
+}
+async function saveProfile() {
+  const tContainer = document.getElementById('pr-trades');
+  const trades = tContainer
+    ? [...tContainer.querySelectorAll('.ttile.on')].map(el=>el.dataset.id).filter(Boolean)
+    : [];
+  try {
+    const result = await api('PATCH', '/auth/profile', {
+      name:       document.getElementById('pr-nm')?.value,
+      bio:        document.getElementById('pr-bio')?.value,
+      license:    document.getElementById('pr-lic')?.value?.trim(),
+      experience: document.getElementById('pr-exp')?.value,
+      insured:    document.querySelector('input[name="pr-ins"]:checked')?.value==='yes',
+      bonded:     document.querySelector('input[name="pr-bnd"]:checked')?.value==='yes',
+      trades,
+    });
+    S.user = result.user; S.profile = result.user.profile||null;
+    updateHdrUser(); toast('Profile saved! ✨'); rPg();
+  } catch(err) { toast(err.message || 'Save failed', 'er'); }
+}
+
+
+/* ═══════════════════════════════════════
+   AUTH SYSTEM — API connected
+═══════════════════════════════════════ */
+
+function showAuth(screen) {
+  document.getElementById('auth-screen').style.display='flex';
+  document.getElementById('app').style.display='none';
+  renderAuthScreen(screen);
+}
+function hideAuth() {
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('app').style.display='flex';
+  updateHdrUser(); rSb(); rPg();
+}
+
+function renderAuthScreen(screen) {
+  const box=document.getElementById('auth-box'), right=document.getElementById('auth-right');
+  if (screen==='landing') {
+    window._regRole='tradesman';
+    box.innerHTML=`
+      <div class="auth-logo"><div class="auth-lmark"><div class="lbar1"></div><div class="lbar2"></div><div class="lbar3"></div></div>
+      <span class="auth-ltxt">TradHub<span class="lai" style="font-size:8px;padding:2px 6px">PRO</span></span></div>
+      <div class="auth-title">TradHub Pro 🔧</div>
+      <div class="auth-sub" style="margin-bottom:20px">The tradesman portal — find jobs, submit bids, grow your business.</div>
+      <button class="gbtn" onclick="window._regRole='tradesman';doGoogleLogin()">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.33 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.67 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+        Continue with Google
+      </button>
+      <div class="auth-divider2"><span>or sign in with email</span></div>
+      <div class="fg"><label class="fl">Email</label><input class="fc_" id="li-email" type="email" placeholder="you@email.com" autocomplete="email"></div>
+      <div class="fg"><label class="fl">Password</label>
+        <div class="input-wrap"><input class="fc_" id="li-pw" type="password" placeholder="Your password" style="padding-right:42px">
+        <span class="eye" onclick="togglePw('li-pw',this)">👁</span></div></div>
+      <div id="li-err" class="field-err" style="display:none;margin-bottom:10px"></div>
+      <button class="btn btp bful" style="padding:12px;font-size:14px;margin-bottom:12px" onclick="doLogin()">Sign In →</button>
+      <div class="auth-divider2"><span>just exploring?</span></div>
+      <button class="social-btn" onclick="demoLogin('tradesman')" style="margin-bottom:12px"><span class="social-ico">🔧</span>Demo as Tradesman</button>
+      <div class="auth-switch">No account? <a onclick="window._regRole='tradesman';renderAuthScreen('register')">Sign up free →</a></div>
+      <div class="auth-switch" style="margin-top:8px"><span class="t3" style="font-size:11px">Homeowner? <a href="index.html" style="color:var(--amber)">Go to TradHub →</a></span></div>`;
+    right.innerHTML=landingProRight();
+  } else if (screen==='login') {
+    box.innerHTML=`
+      <div class="auth-logo"><div class="auth-lmark"><div class="lbar1"></div><div class="lbar2"></div><div class="lbar3"></div></div>
+      <span class="auth-ltxt">TradHub<span class="lai" style="font-size:8px;padding:2px 6px">PRO</span></span></div>
+      <div class="auth-title">Welcome back 👋</div>
+      <div class="auth-sub">Good to see you again. Sign in to manage your jobs.</div>
+      <button class="gbtn" onclick="doGoogleLogin()">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.33 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.67 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+        Continue with Google
+      </button>
+      <div class="auth-divider2"><span>or sign in with email</span></div>
+      <div class="fg"><label class="fl">Email</label><input class="fc_" id="li-email" type="email" placeholder="you@email.com" autocomplete="email"></div>
+      <div class="fg"><label class="fl">Password</label>
+        <div class="input-wrap"><input class="fc_" id="li-pw" type="password" placeholder="Your password" style="padding-right:42px">
+        <span class="eye" onclick="togglePw('li-pw',this)">👁</span></div></div>
+      <div id="li-err" class="field-err" style="display:none;margin-bottom:10px"></div>
+      <button class="btn btp bful" style="padding:12px;font-size:14px;margin-bottom:14px" onclick="doLogin()">Sign In →</button>
+      <div class="auth-divider2"><span>just exploring?</span></div>
+      <button class="social-btn" onclick="demoLogin('homeowner')" style="margin-bottom:14px"><span class="social-ico">🏠</span>Demo as Homeowner</button>
+      <div class="auth-switch">No account? <a onclick="renderAuthScreen('landing')">Sign up free →</a></div>
+      <div class="auth-switch" style="margin-top:8px"><a onclick="renderAuthScreen('landing')">‹ Back to home</a></div>`;
+    right.innerHTML=landingRight();
+  } else if (screen==='homeowner-login') {
+    window._regRole='homeowner';
+    box.innerHTML=`
+      <div class="auth-logo"><div class="auth-lmark"><div class="lbar1"></div><div class="lbar2"></div><div class="lbar3"></div></div>
+      <span class="auth-ltxt">TradHub<span class="lai" style="font-size:8px;padding:2px 6px">PRO</span></span></div>
+      <button onclick="renderAuthScreen('landing')" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:13px;padding:0;margin-bottom:12px;display:flex;align-items:center;gap:4px">‹ Back</button>
+      <div class="auth-title">🏠 Homeowner Login</div>
+      <div class="auth-sub">Welcome back — find your next tradesman</div>
+      <button class="gbtn" onclick="window._regRole='homeowner';doGoogleLogin()">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.33 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.67 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>
+        Continue with Google
+      </button>
+      <div class="auth-divider2"><span>or sign in with email</span></div>
+      <div class="fg"><label class="fl">Email</label><input class="fc_" id="li-email" type="email" placeholder="you@email.com" autocomplete="email"></div>
+      <div class="fg"><label class="fl">Password</label>
+        <div class="input-wrap"><input class="fc_" id="li-pw" type="password" placeholder="Your password" style="padding-right:42px">
+        <span class="eye" onclick="togglePw('li-pw',this)">👁</span></div></div>
+      <div id="li-err" class="field-err" style="display:none;margin-bottom:10px"></div>
+      <button class="btn btp bful" style="padding:12px;font-size:14px;margin-bottom:12px" onclick="doLogin()">Sign In →</button>
+      <div class="auth-divider2"><span>just exploring?</span></div>
+      <button class="social-btn" onclick="demoLogin('homeowner')" style="margin-bottom:10px"><span class="social-ico">🏠</span>Demo as Homeowner</button>
+      <div class="auth-switch">No account? <a onclick="window._regRole='homeowner';renderAuthScreen('register')">Sign up free →</a></div>`;
+    right.innerHTML=landingRight();
+
+  } else if (screen==='register') {
+    window._regRole=window._regRole||(typeof IS_PRO_PORTAL!=='undefined'?'tradesman':'homeowner');
+    window._regStep=1; window._regData={};
+    renderRegStep(); right.innerHTML=landingRight();
+  }
+}
+
+function landingProRight() {
+  return `<div>
+    <div style="font-size:12px;font-weight:700;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:28px">WHY TRADHUB PRO</div>
+    <div style="display:flex;flex-direction:column;gap:24px">
+      <div class="af-row"><div class="af-ico">💼</div><div><div class="af-tit">Find local jobs instantly</div><div class="af-sub">Browse open jobs on a live map near you</div></div></div>
+      <div class="af-row"><div class="af-ico">💰</div><div><div class="af-tit">Get paid securely</div><div class="af-sub">Escrow payments released when work is done</div></div></div>
+      <div class="af-row"><div class="af-ico">⭐</div><div><div class="af-tit">Build your reputation</div><div class="af-sub">Collect reviews and grow your client base</div></div></div>
+      <div class="af-row"><div class="af-ico">📍</div><div><div class="af-tit">Real-time job tracking</div><div class="af-sub">Homeowners can track you en route — builds trust</div></div></div>
+    </div>
+  </div>`;
+}
+function landingRight() {
+  return `<div>
+    <div style="font-size:12px;font-weight:700;color:var(--t3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:28px">WHY TRADHUB</div>
+    <div class="auth-feature"><div class="af-ico">🛡️</div><div><div class="af-title">Verified & insured tradesmen</div><div class="af-desc">Every contractor is licence-checked and rated by real homeowners.</div></div></div>
+    <div class="auth-feature"><div class="af-ico">⚡</div><div><div class="af-title">Bids within hours</div><div class="af-desc">Post your job and get competitive bids — often same day.</div></div></div>
+    <div class="auth-feature"><div class="af-ico">💰</div><div><div class="af-title">No hidden fees</div><div class="af-desc">Homeowners pay nothing. Tradesmen keep 90% of every job.</div></div></div>
+    <div class="auth-feature" style="margin-bottom:0"><div class="af-ico">📍</div><div><div class="af-title">Hyper-local matching</div><div class="af-desc">We match by trade, distance, rating, and availability.</div></div></div>
+    <div class="testimonial">
+      <div class="test-stars">★★★★★</div>
+      <div class="test-quote">"Found a plumber in 2 hours. Fixed it same afternoon. Saved me hundreds."</div>
+      <div class="test-name">Sarah K.</div><div class="test-role">Homeowner</div>
+    </div></div>`;
+}
+
+function renderRegStep() {
+  const role=window._regRole||'homeowner', step=window._regStep||1, total=role==='tradesman'?3:2;
+  const box=document.getElementById('auth-box');
+  const bar=[...Array(total)].map((_,i)=>`<div class="astep ${i+1<step?'done':i+1===step?'act':''}"></div>`).join('');
+  if (step===1) {
+    box.innerHTML=`
+      <div class="auth-logo"><div class="auth-lmark"><div class="lbar1"></div><div class="lbar2"></div><div class="lbar3"></div></div>
+      <span class="auth-ltxt">TradHub<span class="lai" style="font-size:8px;padding:2px 6px">PRO</span></span></div>
+      <div style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:12px">Step 1 of ${total} — Your Details</div>
+      <div class="auth-steps">${bar}</div>
+      <div class="auth-title">Create your account</div>
+      <div class="g2" style="gap:10px">
+        <div class="fg"><label class="fl">First name</label><input class="fc_" id="rg-fn" placeholder="Maria" autocomplete="given-name"></div>
+        <div class="fg"><label class="fl">Last name</label><input class="fc_" id="rg-ln" placeholder="Lopez" autocomplete="family-name"></div>
+      </div>
+      <div class="fg"><label class="fl">Email</label><input class="fc_" id="rg-em" type="email" placeholder="you@email.com" autocomplete="email"></div>
+      <div class="fg"><label class="fl">Phone</label><input class="fc_" id="rg-ph" type="tel" placeholder="Phone number" autocomplete="tel"></div>
+      <div class="fg"><label class="fl">Password</label>
+        <div class="input-wrap"><input class="fc_" id="rg-pw" type="password" placeholder="Min. 8 characters" style="padding-right:42px" oninput="updatePwStr(this.value)">
+        <span class="eye" onclick="togglePw('rg-pw',this)">👁</span></div>
+        <div class="pw-strength" id="pw-bar"></div><div class="pw-txt t3" id="pw-lbl"></div></div>
+      <div id="rg1-err" class="field-err" style="display:none;margin-bottom:10px"></div>
+      <button class="btn btp bful" style="padding:12px;font-size:14px;margin-bottom:14px" onclick="regStep1()">Continue →</button>
+      <div class="auth-switch">Have an account? <a onclick="renderAuthScreen('login')">Sign in</a></div>`;
+  } else if (step===2 && role==='homeowner') {
+    box.innerHTML=`
+      <div class="auth-logo"><div class="auth-lmark"><div class="lbar1"></div><div class="lbar2"></div><div class="lbar3"></div></div>
+      <span class="auth-ltxt">TradHub<span class="lai" style="font-size:8px;padding:2px 6px">PRO</span></span></div>
+      <div style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:12px">Step 2 of 2 — Your Location</div>
+      <div class="auth-steps">${bar}</div>
+      <div class="auth-title">Where are you located?</div>
+      <div class="fg"><label class="fl">Street address</label><input class="fc_" id="rg-addr" placeholder="123 Main St" autocomplete="street-address"></div>
+      <div class="g2" style="gap:10px">
+        <div class="fg"><label class="fl">City</label><input class="fc_" id="rg-city" placeholder="City" autocomplete="address-level2"></div>
+        <div class="fg"><label class="fl">ZIP</label><input class="fc_" id="rg-zip" placeholder="ZIP code" autocomplete="postal-code"></div>
+      </div>
+      <div class="fg"><label class="fl">State</label><select class="fc_" id="rg-state">
+        <option value="">Select state…</option>
+        ${['Alabama','Alaska','Arizona','Arkansas','California','Colorado','Connecticut','Delaware','Florida','Georgia','Hawaii','Idaho','Illinois','Indiana','Iowa','Kansas','Kentucky','Louisiana','Maine','Maryland','Massachusetts','Michigan','Minnesota','Mississippi','Missouri','Montana','Nebraska','Nevada','New Hampshire','New Jersey','New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon','Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas','Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming'].map(s=>`<option>${s}</option>`).join('')}
+      </select></div>
+      <div id="rg2ho-err" class="field-err" style="display:none;margin-bottom:10px"></div>
+      <button class="btn btp bful" style="padding:12px;font-size:14px;margin-bottom:10px" onclick="regStep2HO()">Create My Account 🚀</button>
+      <button class="btn btg bful" style="padding:10px;font-size:13px" onclick="window._regStep=1;renderRegStep()">← Back</button>`;
+  } else if (step===2 && role==='tradesman') {
+    const tks=TRADES.map(t=>`<div class="tck${(window._regData.trades||[]).includes(t.id)?' on':''}" onclick="toggleTrade('${t.id}',this)"><span class="tck-ico">${t.ic}</span><div class="tck-nm">${t.lb}</div></div>`).join('');
+    box.innerHTML=`
+      <div class="auth-logo"><div class="auth-lmark"><div class="lbar1"></div><div class="lbar2"></div><div class="lbar3"></div></div>
+      <span class="auth-ltxt">TradHub<span class="lai" style="font-size:8px;padding:2px 6px">PRO</span></span></div>
+      <div style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:12px">Step 2 of 3 — Your Trade</div>
+      <div class="auth-steps">${bar}</div>
+      <div class="auth-title">What's your trade?</div>
+      <div class="trade-check-grid">${tks}</div>
+      <div class="fg"><label class="fl">Years of experience</label>
+        <select class="fc_" id="rg-exp"><option value="1">Less than 2 years</option><option value="3">2–5 years</option><option value="7" selected>5–10 years</option><option value="12">10–15 years</option><option value="20">15+ years</option></select></div>
+      <div class="fg"><label class="fl">Business name (optional)</label><input class="fc_" id="rg-biz" placeholder="e.g. Mike's Plumbing Co."></div>
+      <div id="rg2tr-err" class="field-err" style="display:none;margin-bottom:10px"></div>
+      <button class="btn btp bful" style="padding:12px;font-size:14px;margin-bottom:10px" onclick="regStep2TR()">Continue →</button>
+      <button class="btn btg bful" style="padding:10px;font-size:13px" onclick="window._regStep=1;renderRegStep()">← Back</button>`;
+  } else if (step===3 && role==='tradesman') {
+    box.innerHTML=`
+      <div class="auth-logo"><div class="auth-lmark"><div class="lbar1"></div><div class="lbar2"></div><div class="lbar3"></div></div>
+      <span class="auth-ltxt">TradHub<span class="lai" style="font-size:8px;padding:2px 6px">PRO</span></span></div>
+      <div style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:12px">Step 3 of 3 — Service Area</div>
+      <div class="auth-steps">${bar}</div>
+      <div class="auth-title">Where do you work?</div>
+      <div class="g2" style="gap:10px">
+        <div class="fg"><label class="fl">City</label><input class="fc_" id="rg-tcity" placeholder="City" autocomplete="address-level2"></div>
+        <div class="fg"><label class="fl">ZIP</label><input class="fc_" id="rg-tzip" placeholder="ZIP code"></div>
+      </div>
+      <div class="g2" style="gap:10px">
+        <div class="fg"><label class="fl">Service radius</label><select class="fc_" id="rg-radius"><option value="5">5 mi</option><option value="10" selected>10 mi</option><option value="25">25 mi</option><option value="50">50 mi</option></select></div>
+        <div class="fg"><label class="fl">License # (optional)</label><input class="fc_" id="rg-lic" placeholder="TX-PLB-001"></div>
+      </div>
+      <div class="g2" style="gap:10px;margin-bottom:20px">
+        <div class="fg"><label class="fl">Insured?</label>
+          <div class="frow g8 mt4">
+            <label class="frow g6" style="cursor:pointer"><input type="radio" name="ins" value="yes" checked> <span class="t2" style="font-size:13px">Yes</span></label>
+            <label class="frow g6" style="cursor:pointer"><input type="radio" name="ins" value="no"> <span class="t2" style="font-size:13px">No</span></label>
+          </div></div>
+        <div class="fg"><label class="fl">Bonded?</label>
+          <div class="frow g8 mt4">
+            <label class="frow g6" style="cursor:pointer"><input type="radio" name="bnd" value="yes"> <span class="t2" style="font-size:13px">Yes</span></label>
+            <label class="frow g6" style="cursor:pointer"><input type="radio" name="bnd" value="no" checked> <span class="t2" style="font-size:13px">No</span></label>
+          </div></div>
+      </div>
+      <div id="rg3-err" class="field-err" style="display:none;margin-bottom:10px"></div>
+      <button class="btn btp bful" style="padding:12px;font-size:14px;margin-bottom:10px" onclick="regStep3TR()">Create My Account 🚀</button>
+      <button class="btn btg bful" style="padding:10px;font-size:13px" onclick="window._regStep=2;renderRegStep()">← Back</button>`;
+  }
+}
+
+function toggleTrade(id, el) {
+  if (!window._regData.trades) window._regData.trades=[];
+  const arr=window._regData.trades, idx=arr.indexOf(id);
+  if (idx>-1) arr.splice(idx,1); else arr.push(id);
+  el.classList.toggle('on');
+}
+function togglePw(inputId, eye) {
+  const inp=document.getElementById(inputId);
+  inp.type=inp.type==='text'?'password':'text';
+  eye.textContent=inp.type==='text'?'🙈':'👁';
+}
+function pwStrength(pw) {
+  let s=0;
+  if(pw.length>=8)s++; if(/[A-Z]/.test(pw))s++; if(/[0-9]/.test(pw))s++; if(/[^A-Za-z0-9]/.test(pw))s++;
+  return{score:s,label:['','Weak','Fair','Good','Strong'][s]||'Weak',col:['','#F43F5E','#0E7490','#3B82F6','#10B981'][s]||'#F43F5E'};
+}
+function updatePwStr(pw) {
+  const{score,label,col}=pwStrength(pw);
+  const bar=document.getElementById('pw-bar'),lbl=document.getElementById('pw-lbl');
+  if(bar){bar.style.width=(score*25)+'%';bar.style.background=col;bar.style.maxWidth='100%';}
+  if(lbl){lbl.textContent=label;lbl.style.color=col;}
+}
+function showErr(id, msg) {
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.textContent=msg;el.style.display='block';
+  setTimeout(()=>{if(el)el.style.display='none';},5000);
+}
+function regStep1() {
+  const fn=document.getElementById('rg-fn')?.value.trim();
+  const ln=document.getElementById('rg-ln')?.value.trim();
+  const em=document.getElementById('rg-em')?.value.trim();
+  const ph=document.getElementById('rg-ph')?.value.trim();
+  const pw=document.getElementById('rg-pw')?.value;
+  if(!fn||!ln){showErr('rg1-err','Enter your full name.');return;}
+  if(!em||!/^[^@]+@[^@]+\.[^@]+$/.test(em)){showErr('rg1-err','Enter a valid email.');return;}
+  if(!pw||pw.length<8){showErr('rg1-err','Password must be at least 8 characters.');return;}
+  window._regData={...window._regData,name:fn+' '+ln,email:em,phone:ph,password:pw,role:window._regRole||'homeowner'};
+  window._regStep=2;renderRegStep();
+}
+function regStep2HO() {
+  const addr=document.getElementById('rg-addr')?.value.trim();
+  const city=document.getElementById('rg-city')?.value.trim();
+  if(!addr||!city){showErr('rg2ho-err','Enter your address and city.');return;}
+  window._regData={...window._regData,address:addr,city,
+    zip:document.getElementById('rg-zip')?.value.trim(),
+    state:document.getElementById('rg-state')?.value};
+  doRegister();
+}
+function regStep2TR() {
+  if(!window._regData.trades?.length){showErr('rg2tr-err','Select at least one trade.');return;}
+  window._regData.experience=document.getElementById('rg-exp')?.value;
+  window._regData.bizName=document.getElementById('rg-biz')?.value.trim();
+  window._regStep=3;renderRegStep();
+}
+function regStep3TR() {
+  const city=document.getElementById('rg-tcity')?.value.trim();
+  if(!city){showErr('rg3-err','Enter your city.');return;}
+  window._regData={...window._regData, city,
+    zip:document.getElementById('rg-tzip')?.value.trim(),
+    radius:parseInt(document.getElementById('rg-radius')?.value)||10,
+    license:document.getElementById('rg-lic')?.value.trim(),
+    insured:document.querySelector('input[name="ins"]:checked')?.value==='yes',
+    bonded:document.querySelector('input[name="bnd"]:checked')?.value==='yes'};
+  doRegister();
+}
+async function doRegister() {
+  const btn=document.querySelector('#auth-box .btn.btp.bful');
+  if(btn){btn.disabled=true;btn.textContent='Creating account…';}
+  try {
+    const result=await api('POST','/auth/register',window._regData);
+    _token=result.token;
+    localStorage.setItem('hf_token',_token);
+    S.user=result.user;S.profile=result.user.profile||null;
+    showRegSuccess(result.user);
+  } catch(err) {
+    const errId=window._regData.role==='homeowner'?'rg2ho-err':'rg3-err';
+    showErr(errId,err.message);
+    if(btn){btn.disabled=false;btn.textContent='Create My Account 🚀';}
+  }
+}
+function showRegSuccess(user) {
+  document.getElementById('auth-box').innerHTML=`
+    <div class="success-screen">
+      <span class="success-ico">🎉</span>
+      <div class="success-title">Welcome, ${user.name.split(' ')[0]}!</div>
+      <div class="success-sub">Your TradHub account is ready.<br>${user.role==='homeowner'?'Post jobs and get bids from local tradesmen.':'Browse open jobs and start bidding.'}</div>
+      <button class="btn btp bful" style="padding:13px;font-size:14px" onclick="finishAuth()">Enter TradHub →</button>
+    </div>`;
+}
+async function doLogin() {
+  const em=document.getElementById('li-email')?.value.trim();
+  const pw=document.getElementById('li-pw')?.value;
+  if(!em){showErr('li-err','Enter your email.');return;}
+  if(!pw){showErr('li-err','Enter your password.');return;}
+  const btn=document.querySelector('#auth-box .btn.btp');
+  if(btn){btn.disabled=true;btn.textContent='Signing in…';}
+  try {
+    const result=await api('POST','/auth/login',{email:em,password:pw});
+    _token=result.token;
+    localStorage.setItem('hf_token',_token);
+    S.user=result.user;S.profile=result.user.profile||null;
+    finishAuth();
+  } catch(err) {
+    showErr('li-err',err.message);
+    if(btn){btn.disabled=false;btn.textContent='Sign In';}
+  }
+}
+async function demoLogin(role) {
+  const email=`demo.${role}.${Date.now()}@tradhub.demo`;
+  const password='demo1234';
+  const name=role==='homeowner'?'Demo Homeowner':'Demo Tradesman';
+  try {
+    let result;
+    try {
+      result=await api('POST','/auth/register',{
+        name,email,password,role,city:'Austin',state:'TX',
+        ...(role==='tradesman'?{trades:['plumbing'],license:'DEMO-001',insured:true,bonded:true}:{})
+      });
+    } catch { result=await api('POST','/auth/login',{email,password}); }
+    _token=result.token;
+    localStorage.setItem('hf_token',_token);
+    S.user=result.user;S.profile=result.user.profile||null;
+    finishAuth();
+  } catch(err) { toast('Demo login failed: '+err.message,'er'); }
+}
+async function finishAuth() {
+  if(!S.user)return;
+  S.role=S.user.role==='tradesman'?'tradesman':'homeowner';
+  S.page=S.role==='homeowner'?'post-job':'browse-jobs';
+  hideAuth(); setRole(S.role); connectWS();
+  await Promise.all([
+    loadNotifications().catch(()=>{}),
+    S.role==='tradesman'?loadMyBids().catch(()=>{}):Promise.resolve(),
+  ]);
+  toast(`Welcome back, ${S.user.name.split(' ')[0]}! 👋`);
+}
+function updateHdrUser() {
+  const area=document.getElementById('hdr-user-area');if(!area)return;
+  const u=S.user;
+  if(u){
+    area.innerHTML=`<div class="user-chip" onclick="showUserMenu()">
+      <div class="user-chip-av" style="background:rgba(14,116,144,.15);color:var(--amber)">${u.ini||u.name[0]}</div>
+      <span class="user-chip-name">${u.name.split(' ')[0]}</span>
+      <span class="t3" style="font-size:11px">▾</span></div>`;
+  } else {
+    area.innerHTML=`<button class="btn btg bsm" onclick="showAuth('landing')">Sign In</button>
+      <button class="btn btp bsm" onclick="showAuth('landing')">Join Free</button>`;
+  }
+}
+function showUserMenu() {
+  const u=S.user;if(!u)return;
+  oMdl(`<div class="mhdr"><div class="mtit">My Account</div><button class="mcls" onclick="cMdl()">✕</button></div>
+  <div class="frow g12 mb16">
+    <div style="width:48px;height:48px;border-radius:12px;background:rgba(14,116,144,.2);border:1px solid rgba(14,116,144,.3);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:var(--amber)">${u.ini||u.name[0]}</div>
+    <div><div class="f7" style="font-size:15px">${u.name}</div><div class="t2" style="font-size:13px;margin-top:2px">${u.email}</div>
+    <span class="bdg ${u.role==='tradesman'?'bt':'ba'} mt4" style="margin-top:5px">${u.role==='tradesman'?'🔧 Tradesman':'🏠 Homeowner'}</span></div>
+  </div>
+  <div class="dv"></div>
+  <button class="btn btg bful" style="justify-content:flex-start;margin-bottom:8px" onclick="cMdl();go('account')">👤 Account Settings</button>
+  <button class="btn btg bful" style="justify-content:flex-start;margin-bottom:8px" onclick="cMdl();go('notifications')">🔔 Notifications</button>
+  <div class="dv"></div>
+  <button class="btn btd bful" onclick="doLogout()">Sign Out</button>`);
+}
+function doLogout() {
+  _token=null; localStorage.removeItem('hf_token');
+  S.user=null;S.profile=null;S.jobs=[];S.bids={};S.msgs={};S.notifs=[];S.revs=[];S.myBids=[];
+  if(_ws){_ws.close();_ws=null;}
+  cMdl();updateHdrUser();rSb();showAuth('landing');
+}
+
+
+// ════════════════════════════════════════════════════════
+// GOOGLE LOGIN
+// ════════════════════════════════════════════════════════
+function doGoogleLogin() {
+  if(GOOGLE_CLIENT_ID==='YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com'){
+    toast('Add your Google Client ID to the config at the top of this file','er');return;
+  }
+  if(typeof google==='undefined'){
+    toast('Google is still loading — please try again in a second','er');return;
+  }
+  const role = window._regRole || 'homeowner';
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: 'email profile openid',
+    callback: async (resp) => {
+      if(resp.error || !resp.access_token){
+        toast('Google sign-in was cancelled or failed','er');return;
+      }
+      try {
+        // Get user info from Google
+        const info = await fetch('https://www.googleapis.com/oauth2/v3/userinfo',
+          {headers:{Authorization:'Bearer '+resp.access_token}}).then(r=>r.json());
+
+        if(!info.email){
+          toast('Could not get your email from Google — please try email login','er');return;
+        }
+
+        // Send to server — single endpoint handles both login and auto-register
+        const res = await api('POST','/auth/google-login',{
+          email: info.email,
+          name:  info.name || info.email.split('@')[0],
+          googleId: info.sub,
+          role,  // homeowner or tradesman — set by which portal they're on
+        });
+
+        if (!res || !res.token || !res.user) {
+          toast('Sign-in failed — server not responding. Please try again in a moment.','er');
+          return;
+        }
+        localStorage.setItem('hf_token', res.token);
+        _token = res.token;
+        S.user  = res.user;
+        S.role  = res.user.role || role;
+        toast('Welcome ' + (res.user.name||'').split(' ')[0] + '! 👋');
+        finishAuth();
+      } catch(err) {
+        console.error('Google login error:', err);
+        toast(err.message || 'Google sign-in failed — please try again','er');
+      }
+    }
+  });
+  client.requestAccessToken();
+}
+
+// ════════════════════════════════════════════════════════
+// PHOTO UPLOAD
+// ════════════════════════════════════════════════════════
+function addPhotos(input){
+  if(!S.draft.photos)S.draft.photos=[];
+  const files=[...input.files].slice(0,4-S.draft.photos.length);
+  files.forEach(f=>{
+    const reader=new FileReader();
+    reader.onload=e=>{S.draft.photos.push(e.target.result);rPg();};
+    reader.readAsDataURL(f);
+  });
+}
+function rmPhoto(i){S.draft.photos.splice(i,1);rPg();}
+
+// ════════════════════════════════════════════════════════
+// AI COST ESTIMATION
+// ════════════════════════════════════════════════════════
+let _aiEstTimer=null;
+function debouncedAiEst(){
+  const box=document.getElementById('ai-est-box');
+  const t=document.getElementById('jt')?.value.trim();
+  const d=document.getElementById('jd')?.value.trim();
+  if(!t&&!d){if(box)box.style.display='none';return;}
+  if(box)box.style.display='block';
+  clearTimeout(_aiEstTimer);
+  _aiEstTimer=setTimeout(()=>runAiEst(t,d),1400);
+}
+async function runAiEst(title,desc){
+  const content=document.getElementById('ai-est-content');
+  if(!content)return;
+  content.innerHTML=`<div class="ai-est-loading"><span style="animation:spin 1s linear infinite;display:inline-block">⟳</span> Analysing your job…</div>`;
+  const trade=TRADES.find(t=>t.id===S.draft.tr);
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',max_tokens:200,
+        messages:[{role:'user',content:`You are a US home services cost estimator. Job: "${title||''}". Details: "${desc||''}". Trade: ${trade?.lb||'general'}. Reply ONLY with JSON: {"range":"$X–$Y","note":"one sentence under 15 words explaining the range"}. No markdown.`}]
+      })
+    });
+    const data=await res.json();
+    const text=data.content?.[0]?.text||'{}';
+    const est=JSON.parse(text.replace(/```json|```/g,'').trim());
+    S.draft.aiEst=est;
+    if(content) content.innerHTML=`<div style="font-size:15px;color:var(--t1);font-weight:700;margin-bottom:4px">✦ ${est.range||'—'}</div><div style="font-size:12px;color:var(--t2);line-height:1.5">${est.note||''}</div>`;
+  }catch(e){
+    if(content)content.innerHTML=`<div style="font-size:12px;color:var(--t3)">Add more details for a cost estimate.</div>`;
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// ADDRESS AUTOCOMPLETE (Nominatim — no API key needed)
+// ════════════════════════════════════════════════════════
+let _addrTimer=null;
+async function addrAutocomplete(inp,sugId){
+  const q=inp.value.trim(),sug=document.getElementById(sugId);
+  if(!sug)return;
+  if(q.length<3){sug.style.display='none';return;}
+  clearTimeout(_addrTimer);
+  _addrTimer=setTimeout(async()=>{
+    try{
+      const res=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&addressdetails=1&countrycodes=us`,
+        {headers:{'Accept-Language':'en','User-Agent':'TradHub/1.0'}});
+      const results=await res.json();
+      if(!results.length){sug.style.display='none';return;}
+      sug.innerHTML=results.map((r,i)=>{
+        const a=r.address;
+        const label=[a?.house_number,a?.road,a?.city||a?.town,a?.state].filter(Boolean).join(', ')||r.display_name.split(',').slice(0,3).join(',');
+        return`<div class="addr-suggestion" onclick="selectAddr(${i},'${sugId}','${inp.id}')" data-idx="${i}"
+          data-hn="${(a?.house_number||'').replace(/"/g,'')}" data-road="${(a?.road||'').replace(/"/g,'')}"
+          data-city="${(a?.city||a?.town||a?.village||'').replace(/"/g,'')}" data-zip="${(a?.postcode||'').replace(/"/g,'')}"
+          >${label}</div>`;
+      }).join('');
+      sug.style.display='block';
+      document.onclick=e=>{if(!sug.contains(e.target)&&e.target!==inp)sug.style.display='none';};
+    }catch(e){sug.style.display='none';}
+  },450);
+}
+function selectAddr(i,sugId,inpId){
+  const item=document.getElementById(sugId).querySelectorAll('.addr-suggestion')[i];
+  if(!item)return;
+  const street=[item.dataset.hn,item.dataset.road].filter(Boolean).join(' ');
+  document.getElementById(inpId).value=street||item.textContent.split(',')[0];
+  const cityEl=document.getElementById('jci');if(cityEl)cityEl.value=item.dataset.city||'';
+  const zipEl=document.getElementById('jz');if(zipEl)zipEl.value=item.dataset.zip||'';
+  document.getElementById(sugId).style.display='none';
+}
+
+// ════════════════════════════════════════════════════════
+// LIVE TRADESMAN TRACKING
+// ════════════════════════════════════════════════════════
+window._trackingActive=false;
+window._trackMap=null;
+window._tradesmanMarker=null;
+window._trackInterval=null;
+
+function startTrackingBroadcast(){
+  if(!navigator.geolocation)return;
+  window._trackingActive=true;
+  const share=()=>navigator.geolocation.getCurrentPosition(pos=>{
+    if(_ws&&_ws.readyState===1)
+      _ws.send(JSON.stringify({type:'location_update',lat:pos.coords.latitude,lng:pos.coords.longitude}));
+  });
+  share();
+  window._trackInterval=setInterval(share,15000);
+}
+function stopTrackingBroadcast(){
+  window._trackingActive=false;clearInterval(window._trackInterval);}
+
+function injectTrackPanels(){
+  const inProg=S.jobs.filter(j=>j.own===(S.user?.id||'')&&j.st==='in_progress');
+  inProg.forEach(job=>{
+    const el=document.getElementById('track-panel-'+job.id);
+    if(!el||el.dataset.rendered)return;
+    el.dataset.rendered='1';
+    el.innerHTML=`
+      <div class="frow g8 mb8"><span class="track-badge">● Tradesman en route</span></div>
+      <div style="font-size:12px;color:var(--t2);margin-bottom:8px">Live location — updates every 15 seconds</div>
+      <div id="track-map-${job.id}" class="track-map"></div>
+      <div id="track-eta-${job.id}" style="font-size:12px;color:var(--t3);margin-top:6px;text-align:center">Waiting for tradesman location…</div>`;
+    setTimeout(()=>initTrackMap(job.id),150);
+  });
+}
+
+function initTrackMap(jobId){
+  const el=document.getElementById('track-map-'+jobId);if(!el||window._trackMap)return;
+  const jxy=JXY[jobId]||USER_LOC||{lat:34.0195,lng:-118.4912};
+  const map=L.map('track-map-'+jobId,{zoomControl:false,attributionControl:false});
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:19}).addTo(map);
+  const homeIco=L.divIcon({className:'',html:`<div style="width:18px;height:18px;border-radius:50%;background:#0E7490;border:3px solid rgba(14,116,144,.4);box-shadow:0 0 0 5px rgba(14,116,144,.12)"></div>`,iconSize:[18,18],iconAnchor:[9,9]});
+  L.marker([jxy.lat,jxy.lng],{icon:homeIco}).addTo(map).bindPopup('Job location');
+  map.setView([jxy.lat,jxy.lng],14);
+  window._trackMap=map;window._trackJobCoords=jxy;
+}
+
+function handleTradesmanLocation(lat,lng,jobId){
+  if(!window._trackMap){initTrackMap(jobId);}
+  if(!window._trackMap)return;
+  const trIco=L.divIcon({className:'',html:`<div style="width:22px;height:22px;border-radius:50%;background:#10B981;border:3px solid rgba(16,185,129,.5);display:flex;align-items:center;justify-content:center;font-size:10px">🔧</div>`,iconSize:[22,22],iconAnchor:[11,11]});
+  if(window._tradesmanMarker)window._tradesmanMarker.setLatLng([lat,lng]);
+  else window._tradesmanMarker=L.marker([lat,lng],{icon:trIco}).addTo(window._trackMap).bindPopup('Your tradesman');
+  if(window._trackJobCoords){
+    const R=6371,jc=window._trackJobCoords;
+    const dLat=(jc.lat-lat)*Math.PI/180,dLng=(jc.lng-lng)*Math.PI/180;
+    const a=Math.sin(dLat/2)**2+Math.cos(lat*Math.PI/180)*Math.cos(jc.lat*Math.PI/180)*Math.sin(dLng/2)**2;
+    const dist=R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+    const mins=Math.round(dist/0.5);
+    const eta=document.getElementById('track-eta-'+(jobId||''));
+    if(eta)eta.textContent=dist<0.1?'✓ Tradesman has arrived!':`~${mins} min away (${dist<1?(dist*1000).toFixed(0)+'m':(dist).toFixed(1)+'km'})`;
+    window._trackMap.fitBounds([[lat,lng],[jc.lat,jc.lng]],{padding:[24,24]});
+  }
+}
+
+/* ── BOOT ─────────────────────────────────────────────── */
+updateHdrUser();
+(async()=>{
+  if(_token){
+    try{
+      const result=await api('GET','/auth/me');
+      S.user=result.user;S.profile=result.user.profile||null;
+      S.role=S.user.role==='tradesman'?'tradesman':'homeowner';
+      S.page=S.role==='homeowner'?'post-job':'browse-jobs';
+      setRole(S.role);
+      document.getElementById('app').style.display='flex';
+      document.getElementById('auth-screen').style.display='none';
+      updateHdrUser();connectWS();
+      await Promise.all([
+        loadNotifications().catch(()=>{}),
+        S.role==='tradesman'?loadMyBids().catch(()=>{}):Promise.resolve(),
+        getUserLocation().catch(()=>{}),
+      ]);
+      rPg();
+    }catch(bootErr){
+      // Only clear token if auth itself failed (401), not if other calls 404'd
+      if(bootErr.status===401||bootErr.status===403){
+        _token=null;localStorage.removeItem('hf_token');
+        document.getElementById('app').style.display='none';
+        showAuth('landing');
+      }
+    }
+  }else{
+    document.getElementById('app').style.display='none';
+    showAuth('landing');
+  }
+  Promise.all([getUserLocation(),geocodeAllJobs()]).catch(()=>{});
+})();
+</script>
+</body>
+</html>
