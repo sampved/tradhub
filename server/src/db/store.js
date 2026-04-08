@@ -1,19 +1,40 @@
 /**
- * Herfeh AI — In-memory database with JSON file persistence.
- * When you move to production, swap this module out for PostgreSQL or SQLite.
- * Every function here has the same interface a real DB layer would expose.
+ * TradHub — In-memory database with JSON file persistence.
+ * Data is saved to a Render Disk mounted at /data (persistent across restarts).
+ * 
+ * Setup on Render:
+ *   1. Go to your tradhub-server service → Disks
+ *   2. Add disk: Name=tradhub-data, Mount=/data, Size=1GB ($1/mo)
+ *   3. Redeploy — data will now survive restarts and deploys forever
  */
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dir = dirname(fileURLToPath(import.meta.url));
-// On Render free tier, use /tmp so data survives restarts within the same instance
-// On local dev, use the project root
-const IS_RENDER = process.env.RENDER === 'true' || process.env.NODE_ENV === 'production';
-const DB_FILE = IS_RENDER
-  ? '/tmp/tradhub-data.json'
-  : join(__dir, '../../tradhub-data.json');
+
+// Path priority:
+//   1. /data/tradhub-data.json  — Render persistent disk (best, survives everything)
+//   2. /tmp/tradhub-data.json   — Render free tier (survives restarts, lost on redeploy)
+//   3. local file               — development
+function getDbPath() {
+  if (process.env.NODE_ENV === 'production') {
+    // Try persistent disk first
+    try {
+      if (!existsSync('/data')) mkdirSync('/data', { recursive: true });
+      return '/data/tradhub-data.json';
+    } catch {
+      // Fall back to /tmp if disk not mounted
+      console.warn('⚠️  Persistent disk not available, using /tmp (data may be lost on redeploy)');
+      console.warn('   → Add a Render Disk at /data to make data permanent ($1/mo)');
+      return '/tmp/tradhub-data.json';
+    }
+  }
+  return join(__dir, '../../tradhub-data.json');
+}
+
+const DB_FILE = getDbPath();
+console.log(`💾 Database: ${DB_FILE}`);
 
 // ── Default empty store ──────────────────────────────────────────────────────
 const EMPTY = {
@@ -30,16 +51,44 @@ const EMPTY = {
 // ── Load / Save ──────────────────────────────────────────────────────────────
 function load() {
   try {
-    if (existsSync(DB_FILE)) return JSON.parse(readFileSync(DB_FILE, 'utf8'));
-  } catch {}
+    if (existsSync(DB_FILE)) {
+      const data = JSON.parse(readFileSync(DB_FILE, 'utf8'));
+      console.log(`✅ Loaded: ${data.users?.length||0} users, ${data.jobs?.length||0} jobs, ${data.bids?.length||0} bids`);
+      return data;
+    }
+  } catch (e) {
+    console.error('DB load error:', e.message);
+  }
+  console.log('📋 Starting with empty database');
   return JSON.parse(JSON.stringify(EMPTY));
 }
 
 let store = load();
 
+// Debounced save — batches rapid writes into one disk write every 500ms
+let _saveTimer = null;
 function save() {
-  try { writeFileSync(DB_FILE, JSON.stringify(store, null, 2)); } catch (e) { console.error('DB save error', e); }
+  if (_saveTimer) clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(() => {
+    try {
+      writeFileSync(DB_FILE, JSON.stringify(store, null, 2));
+    } catch (e) {
+      console.error('DB save error:', e.message);
+    }
+  }, 500);
 }
+
+// Also save immediately on process exit
+process.on('SIGTERM', () => {
+  if (_saveTimer) { clearTimeout(_saveTimer); }
+  try { writeFileSync(DB_FILE, JSON.stringify(store, null, 2)); } catch {}
+  process.exit(0);
+});
+process.on('SIGINT', () => {
+  if (_saveTimer) { clearTimeout(_saveTimer); }
+  try { writeFileSync(DB_FILE, JSON.stringify(store, null, 2)); } catch {}
+  process.exit(0);
+});
 
 // ── ID generator ─────────────────────────────────────────────────────────────
 export function uid(prefix = 'x') {
@@ -152,10 +201,10 @@ export const jobs = {
 
 // ── BIDS ─────────────────────────────────────────────────────────────────────
 export const bids = {
-  all:        ()       => store.bids,
-  findById:   (id)     => store.bids.find(b => b.id === id),
-  byJob:      (jobId)  => store.bids.filter(b => b.job_id === jobId && b.status !== 'withdrawn'),
-  byBidder:   (userId) => store.bids.filter(b => b.bidder_id === userId),
+  all:          ()       => store.bids,
+  findById:     (id)     => store.bids.find(b => b.id === id),
+  byJob:        (jobId)  => store.bids.filter(b => b.job_id === jobId && b.status !== 'withdrawn'),
+  byBidder:     (userId) => store.bids.filter(b => b.bidder_id === userId),
   existsActive: (jobId, bidderId) =>
     store.bids.some(b => b.job_id === jobId && b.bidder_id === bidderId && b.status !== 'withdrawn'),
 
@@ -179,14 +228,14 @@ export const bids = {
     const allBids = bids.byJob(bid.job_id);
     return {
       ...bid,
-      job_title: job?.title,
-      trade: job?.trade,
-      address: job?.address,
-      city: job?.city,
+      job_title:  job?.title,
+      trade:      job?.trade,
+      address:    job?.address,
+      city:       job?.city,
       job_status: job?.status,
       budget_min: job?.budget_min,
       budget_max: job?.budget_max,
-      owner_id: job?.owner_id,
+      owner_id:   job?.owner_id,
       total_bids: allBids.length,
     };
   },
@@ -195,6 +244,7 @@ export const bids = {
 // ── MESSAGES ─────────────────────────────────────────────────────────────────
 export const messages = {
   all: () => store.messages,
+
   forConversation(jobId, userA, userB) {
     return store.messages
       .filter(m => m.job_id === jobId &&
@@ -217,20 +267,20 @@ export const messages = {
         const key = `${m.job_id}::${otherId}`;
         if (!seen.has(key)) {
           const other = users.safe(users.findById(otherId));
-          const job = jobs.findById(m.job_id);
+          const job   = jobs.findById(m.job_id);
           const unread = store.messages.filter(x =>
             x.job_id === m.job_id && x.sender_id === otherId && x.receiver_id === userId && !x.read
           ).length;
           seen.set(key, {
-            job_id: m.job_id,
-            job_title: job?.title,
-            job_trade: job?.trade,
-            other_user_id: otherId,
+            job_id:          m.job_id,
+            job_title:       job?.title,
+            job_trade:       job?.trade,
+            other_user_id:   otherId,
             other_user_name: other?.name,
-            other_user_ini: other?.ini,
-            last_message: m.text,
-            last_at: m.created_at,
-            unread_count: unread,
+            other_user_ini:  other?.ini,
+            last_message:    m.text,
+            last_at:         m.created_at,
+            unread_count:    unread,
           });
         }
       });
@@ -283,6 +333,7 @@ export const notifications = {
 // ── REVIEWS ──────────────────────────────────────────────────────────────────
 export const reviews = {
   all: () => store.reviews,
+
   forReviewee: (userId) => store.reviews
     .filter(r => r.reviewee_id === userId)
     .sort((a, b) => b.created_at - a.created_at)
@@ -304,10 +355,10 @@ export const reviews = {
 
 // ── PAYMENTS ─────────────────────────────────────────────────────────────────
 export const payments = {
-  all:        ()     => store.payments,
-  findById:   (id)   => store.payments.find(p => p.id === id),
-  byJob:      (jid)  => store.payments.filter(p => p.job_id === jid),
-  byUser:     (uid)  => store.payments.filter(p => p.homeowner_id === uid || p.tradesman_id === uid),
+  all:      ()    => store.payments,
+  findById: (id)  => store.payments.find(p => p.id === id),
+  byJob:    (jid) => store.payments.filter(p => p.job_id === jid),
+  byUser:   (uid) => store.payments.filter(p => p.homeowner_id === uid || p.tradesman_id === uid),
 
   create(data) {
     const p = { ...data, created_at: Date.now() };
@@ -325,21 +376,21 @@ export const payments = {
   },
 
   stats() {
-    const all = store.payments;
+    const all      = store.payments;
     const captured = all.filter(p => p.status === 'captured');
-    const gross = captured.reduce((s, p) => s + p.amount, 0);
-    const fees  = captured.reduce((s, p) => s + (p.platform_fee || 0), 0);
-    const now   = Date.now();
-    const day   = 86400000;
+    const gross    = captured.reduce((s, p) => s + p.amount, 0);
+    const fees     = captured.reduce((s, p) => s + (p.platform_fee || 0), 0);
+    const now      = Date.now();
+    const day      = 86400000;
     return {
       total_transactions: captured.length,
       gross_volume:   gross,
       platform_fees:  fees,
       net_to_trades:  gross - fees,
-      today:          captured.filter(p => p.captured_at > now - day).reduce((s,p)=>s+p.platform_fee,0),
-      this_week:      captured.filter(p => p.captured_at > now - 7*day).reduce((s,p)=>s+p.platform_fee,0),
-      this_month:     captured.filter(p => p.captured_at > now - 30*day).reduce((s,p)=>s+p.platform_fee,0),
-      pending:        all.filter(p => p.status === 'held').reduce((s,p)=>s+p.amount,0),
+      today:      captured.filter(p => p.captured_at > now - day).reduce((s,p)=>s+p.platform_fee,0),
+      this_week:  captured.filter(p => p.captured_at > now - 7*day).reduce((s,p)=>s+p.platform_fee,0),
+      this_month: captured.filter(p => p.captured_at > now - 30*day).reduce((s,p)=>s+p.platform_fee,0),
+      pending:    all.filter(p => p.status === 'held').reduce((s,p)=>s+p.amount,0),
     };
   },
 };
