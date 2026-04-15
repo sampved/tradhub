@@ -18,7 +18,12 @@ const IS_PROD = process.env.NODE_ENV === 'production';
 
 app.use(cors({
   origin: IS_PROD
-    ? ['https://tradhub.ai', 'https://www.tradhub.ai']
+    ? [
+        'https://tradhub.ai',
+        'https://www.tradhub.ai',
+        'https://pro.tradhub.ai',
+        'https://tradhub-server.onrender.com',
+      ]
     : (origin, cb) => cb(null, true),
   credentials: true,
 }));
